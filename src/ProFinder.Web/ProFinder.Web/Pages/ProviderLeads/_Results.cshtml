@@ -39,8 +39,8 @@
                                 <div class="small text-muted">WhatsApp: @(item.WhatsApp ?? "-")</div>
                             </td>
                             <td>
-                                <div>@string.Join(" / ", new[] { item.State, item.City }.Where(x => !string.IsNullOrWhiteSpace(x)))</div>
-                                <div class="small text-muted">@item.RegionDisplayName</div>
+                                <div>@(string.IsNullOrWhiteSpace(item.LocalityDisplay) ? "-" : item.LocalityDisplay)</div>
+                                <div class="small text-muted">Regiao-alvo: @(item.RegionDisplayName ?? "-")</div>
                             </td>
                             <td>
                                 <div>@item.SourceName</div>

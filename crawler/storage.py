@@ -11,7 +11,13 @@ import pandas as pd
 import pyodbc
 
 from crawler.models.provider import Provider
-from crawler.utils.parser import build_deduplication_key, merge_json_array, sanitize_extracted_text, truncate
+from crawler.utils.parser import (
+    build_deduplication_key,
+    extract_address_locality,
+    merge_json_array,
+    sanitize_extracted_text,
+    truncate,
+)
 from crawler.utils.phone_extractor import normalize_phone, pick_primary_phone
 
 
@@ -181,9 +187,15 @@ class MssqlStorage:
         sanitized_phone = sanitize_extracted_text(provider.phone)
         sanitized_whatsapp = sanitize_extracted_text(provider.whatsapp)
         sanitized_address = sanitize_extracted_text(provider.address)
+        locality = extract_address_locality(
+            sanitized_address,
+            fallback_neighborhood=provider.neighborhood,
+            fallback_city=provider.city,
+            fallback_state=provider.state,
+        )
         lead_source_id = self._resolve_source_id(provider.source)
         normalized_phone = pick_primary_phone(sanitized_phone, sanitized_whatsapp)
-        deduplication_key = build_deduplication_key(provider.name, normalized_phone, provider.city)
+        deduplication_key = build_deduplication_key(provider.name, normalized_phone, locality.city)
         now = self.utcnow()
         payload_json = json.dumps(provider.raw_payload, ensure_ascii=False)
         cursor = self._cursor()
@@ -266,9 +278,9 @@ class MssqlStorage:
                 truncate(_pick_best_contact(existing[5], sanitized_whatsapp), 30),
                 normalized_phone,
                 truncate(_pick_best_text(existing[6], sanitized_address), 300),
-                truncate(_pick_best_text(existing[7], provider.neighborhood), 120),
-                truncate(_pick_best_text(existing[8], provider.city), 120),
-                truncate(_pick_best_text(existing[9], provider.state), 10),
+                truncate(_pick_best_text(existing[7], locality.neighborhood), 120),
+                truncate(_pick_best_text(existing[8], locality.city), 120),
+                truncate(_pick_best_text(existing[9], locality.state), 10),
                 truncate(_pick_best_text(existing[10], provider.website), 250),
                 truncate(provider.source_listing_url, 500),
                 truncate(provider.source_details_url or provider.source_listing_url, 500),
@@ -342,9 +354,9 @@ class MssqlStorage:
             truncate(sanitized_whatsapp, 30),
             normalized_phone,
             truncate(sanitized_address, 300),
-            truncate(provider.neighborhood, 120),
-            truncate(provider.city, 120),
-            truncate(provider.state, 10),
+            truncate(locality.neighborhood, 120),
+            truncate(locality.city, 120),
+            truncate(locality.state, 10),
             truncate(provider.website, 250),
             truncate(provider.source_listing_url, 500),
             truncate(provider.source_details_url or provider.source_listing_url, 500),

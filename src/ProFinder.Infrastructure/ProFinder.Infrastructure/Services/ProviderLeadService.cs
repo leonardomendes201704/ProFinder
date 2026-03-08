@@ -135,6 +135,7 @@ public class ProviderLeadService : IProviderLeadService
             Neighborhood = entity.Neighborhood,
             City = entity.City,
             State = entity.State,
+            LocalityDisplay = BuildLeadLocalityDisplay(entity.Neighborhood, entity.City, entity.State),
             Website = entity.Website,
             SourceListingUrl = entity.SourceListingUrl,
             SourceDetailsUrl = entity.SourceDetailsUrl,
@@ -171,8 +172,10 @@ public class ProviderLeadService : IProviderLeadService
             Name = entity.Name,
             Phone = entity.Phone,
             WhatsApp = entity.WhatsApp,
+            Neighborhood = entity.Neighborhood,
             City = entity.City,
             State = entity.State,
+            LocalityDisplay = BuildLeadLocalityDisplay(entity.Neighborhood, entity.City, entity.State),
             Website = entity.Website,
             ProfessionName = entity.Profession?.Name,
             ProfessionNamesDisplay = BuildProfessionNamesDisplay(professions, entity.Profession?.Name),
@@ -232,6 +235,13 @@ public class ProviderLeadService : IProviderLeadService
 
         return string.Join(" / ",
             new[] { region.State, region.City, region.Neighborhood, region.Zone }
+                .Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+
+    private static string BuildLeadLocalityDisplay(string? neighborhood, string? city, string? state)
+    {
+        return string.Join(" / ",
+            new[] { neighborhood, city, state }
                 .Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }

@@ -12,5 +12,6 @@ Arquivos desta pasta:
 - `06-reset-crawler-data.md`
 - `07-multiplas-profissoes.md`
 - `08-leads-sem-telefone.md`
+- `09-localidade-real-do-lead.md`
 
 Objetivo: registrar cada etapa da implementacao do crawler multissite integrado ao ProFinder.

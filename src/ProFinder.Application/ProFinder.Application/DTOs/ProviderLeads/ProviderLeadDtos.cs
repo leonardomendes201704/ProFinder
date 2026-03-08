@@ -18,9 +18,13 @@ public class ProviderLeadListItemDto
 
     public string? WhatsApp { get; set; }
 
+    public string? Neighborhood { get; set; }
+
     public string? City { get; set; }
 
     public string? State { get; set; }
+
+    public string LocalityDisplay { get; set; } = string.Empty;
 
     public string? Website { get; set; }
 
@@ -76,6 +80,8 @@ public class ProviderLeadDetailsDto
     public string? City { get; set; }
 
     public string? State { get; set; }
+
+    public string LocalityDisplay { get; set; } = string.Empty;
 
     public string? Website { get; set; }
 

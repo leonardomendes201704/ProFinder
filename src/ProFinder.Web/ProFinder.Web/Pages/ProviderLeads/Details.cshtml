@@ -28,8 +28,8 @@
                     <dd class="col-sm-8">@(Model.Item.WhatsApp ?? "-")</dd>
                     <dt class="col-sm-4">Endereco</dt>
                     <dd class="col-sm-8">@(Model.Item.Address ?? "-")</dd>
-                    <dt class="col-sm-4">Cidade/UF</dt>
-                    <dd class="col-sm-8">@string.Join(" / ", new[] { Model.Item.City, Model.Item.State }.Where(x => !string.IsNullOrWhiteSpace(x)))</dd>
+                    <dt class="col-sm-4">Localidade</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Item.LocalityDisplay) ? "-" : Model.Item.LocalityDisplay)</dd>
                     <dt class="col-sm-4">Website</dt>
                     <dd class="col-sm-8">
                         @if (!string.IsNullOrWhiteSpace(Model.Item.Website))

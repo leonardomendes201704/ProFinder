@@ -4,6 +4,14 @@ import json
 import re
 import unicodedata
 from collections.abc import Iterable
+from dataclasses import dataclass
+
+
+@dataclass(slots=True)
+class AddressLocality:
+    neighborhood: str | None = None
+    city: str | None = None
+    state: str | None = None
 
 
 def normalize_whitespace(value: str | None) -> str | None:
@@ -82,3 +90,48 @@ def merge_json_array(existing_json: str | None, values: Iterable[str | None]) ->
         unique_items.append(item)
 
     return json.dumps(unique_items, ensure_ascii=False)
+
+
+def extract_address_locality(
+    address: str | None,
+    *,
+    fallback_neighborhood: str | None = None,
+    fallback_city: str | None = None,
+    fallback_state: str | None = None,
+) -> AddressLocality:
+    normalized_address = sanitize_extracted_text(address)
+    locality = AddressLocality(
+        neighborhood=normalize_whitespace(fallback_neighborhood),
+        city=normalize_whitespace(fallback_city),
+        state=normalize_whitespace(fallback_state.upper() if fallback_state else None),
+    )
+
+    if not normalized_address:
+        return locality
+
+    text = re.sub(r"(?:,\s*|\s+-\s*)\d{5}-?\d{3}\s*$", "", normalized_address).strip(" ,-")
+    city_state_match = re.search(r",\s*(?P<city>[^,]+?)\s*-\s*(?P<state>[A-Za-z]{2})\s*$", text)
+
+    if not city_state_match:
+        return locality
+
+    parsed_city = normalize_whitespace(city_state_match.group("city"))
+    parsed_state = normalize_whitespace(city_state_match.group("state").upper())
+    locality.city = parsed_city or locality.city
+    locality.state = parsed_state or locality.state
+
+    prefix = text[:city_state_match.start()].strip(" ,-")
+    parsed_neighborhood: str | None = None
+    if prefix:
+        hyphen_parts = [part.strip(" ,-") for part in re.split(r"\s+-\s+", prefix) if part.strip(" ,-")]
+        if len(hyphen_parts) >= 2:
+            parsed_neighborhood = hyphen_parts[-1]
+        else:
+            comma_parts = [part.strip(" ,-") for part in prefix.split(",") if part.strip(" ,-")]
+            if len(comma_parts) >= 2:
+                parsed_neighborhood = comma_parts[-1]
+
+    if parsed_neighborhood and re.search(r"[A-Za-zÀ-ÿ]", parsed_neighborhood):
+        locality.neighborhood = normalize_whitespace(parsed_neighborhood)
+
+    return locality
