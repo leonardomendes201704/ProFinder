@@ -64,6 +64,10 @@ $env:PROFINDER_SQLSERVER_CONNECTION_STRING='Driver={ODBC Driver 18 for SQL Serve
 python crawler/main.py --city "praia grande sp" --service "eletricista"
 ```
 
+Observacao:
+
+- por padrao, o crawler descarta leads sem telefone ou WhatsApp; a regra pode ser alterada em `Configuracoes` pela chave `crawler.require_phone`
+
 ## Docker
 
 Arquivos principais de deploy:

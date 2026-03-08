@@ -208,8 +208,30 @@ BEGIN
     ('crawler.max_pages_per_target', 'Crawler', 'Maximo de paginas por alvo', 'Limite de paginas a percorrer por site e alvo.', 'int', '50', '50', 0, 1, 9, @createdAt, @createdAt),
     ('crawler.max_records_per_run', 'Crawler', 'Maximo de leads por execucao', 'Quantidade maxima de registros persistidos por execucao.', 'int', '5000', '5000', 0, 1, 10, @createdAt, @createdAt),
     ('crawler.browser_headless', 'Crawler', 'Executar navegadores em headless', 'Controla se Selenium e Playwright rodam em modo headless.', 'bool', 'true', 'true', 0, 1, 11, @createdAt, @createdAt),
+    ('crawler.browser.chrome_arguments_json', 'Crawler', 'Argumentos extras do Chrome', 'JSON com argumentos extras usados ao iniciar o Chrome no Selenium. Em Linux container, mantenha --no-sandbox e --disable-dev-shm-usage.', 'json', '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--disable-software-rasterizer","--remote-debugging-pipe"]', '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--disable-software-rasterizer","--remote-debugging-pipe"]', 0, 1, 12, @createdAt, @createdAt),
+    ('crawler.require_phone', 'Crawler', 'Exigir telefone para captacao', 'Quando ativo, descarta leads sem telefone ou WhatsApp antes da persistencia.', 'bool', 'true', 'true', 0, 1, 13, @createdAt, @createdAt),
     ('crawler.google_maps.max_idle_scrolls', 'GoogleMaps', 'Scrolls ociosos maximos', 'Limite de scrolls sem novos cards no Google Maps.', 'int', '8', '8', 0, 1, 1, @createdAt, @createdAt),
     ('crawler.google_maps.scroll_pause_ms', 'GoogleMaps', 'Pausa do scroll (ms)', 'Pausa entre scrolls da lista do Google Maps.', 'int', '1500', '1500', 0, 1, 2, @createdAt, @createdAt);
+END;
+GO
+
+DECLARE @createdAt DATETIME2 = SYSUTCDATETIME();
+
+IF NOT EXISTS (SELECT 1 FROM dbo.prf_app_settings WHERE [Key] = 'crawler.browser.chrome_arguments_json')
+BEGIN
+    INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
+    VALUES
+    ('crawler.browser.chrome_arguments_json', 'Crawler', 'Argumentos extras do Chrome', 'JSON com argumentos extras usados ao iniciar o Chrome no Selenium. Em Linux container, mantenha --no-sandbox e --disable-dev-shm-usage.', 'json', '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--disable-software-rasterizer","--remote-debugging-pipe"]', '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--disable-software-rasterizer","--remote-debugging-pipe"]', 0, 1, 12, @createdAt, @createdAt);
+END;
+GO
+
+DECLARE @createdAt DATETIME2 = SYSUTCDATETIME();
+
+IF NOT EXISTS (SELECT 1 FROM dbo.prf_app_settings WHERE [Key] = 'crawler.require_phone')
+BEGIN
+    INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
+    VALUES
+    ('crawler.require_phone', 'Crawler', 'Exigir telefone para captacao', 'Quando ativo, descarta leads sem telefone ou WhatsApp antes da persistencia.', 'bool', 'true', 'true', 0, 1, 13, @createdAt, @createdAt);
 END;
 GO
 

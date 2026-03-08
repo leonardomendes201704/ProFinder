@@ -19,6 +19,7 @@ class CrawlerSettings:
     http_timeout_seconds: int = 30
     max_retries: int = 3
     request_delay_ms: int = 700
+    require_phone: bool = True
     browser_fallback_enabled: bool = True
     user_agent_rotation_enabled: bool = True
     proxy_list: list[str] = field(default_factory=list)
@@ -52,6 +53,8 @@ class CrawlerSettings:
                 instance.max_retries = _to_int(value, instance.max_retries)
             elif key == "crawler.request_delay_ms":
                 instance.request_delay_ms = _to_int(value, instance.request_delay_ms)
+            elif key == "crawler.require_phone":
+                instance.require_phone = _to_bool(value, instance.require_phone)
             elif key == "crawler.browser_fallback_enabled":
                 instance.browser_fallback_enabled = _to_bool(value, instance.browser_fallback_enabled)
             elif key == "crawler.user_agent_rotation_enabled":

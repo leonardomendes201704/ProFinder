@@ -127,6 +127,15 @@ public static class CrawlerRuntimeSettingCatalog
             false,
             12),
         new(
+            "crawler.require_phone",
+            "Crawler",
+            "Exigir telefone para captacao",
+            "Quando ativo, descarta leads sem telefone ou WhatsApp antes da persistencia.",
+            "bool",
+            "true",
+            false,
+            13),
+        new(
             "crawler.google_maps.max_idle_scrolls",
             "GoogleMaps",
             "Scrolls ociosos maximos",

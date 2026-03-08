@@ -18,6 +18,7 @@ from crawler.scrapers.olx import OlxScraper
 from crawler.scrapers.telelistas import TelelistasScraper
 from crawler.storage import MssqlStorage
 from crawler.utils.parser import build_search_query
+from crawler.utils.phone_extractor import pick_primary_phone
 
 
 @dataclass(slots=True)
@@ -190,6 +191,16 @@ class CrawlScheduler:
             self._stop_event.set()
 
     def _process_provider(self, provider: Provider) -> None:
+        if self._settings.require_phone and not pick_primary_phone(provider.phone, provider.whatsapp):
+            self._stats.skipped += 1
+            self._logger.debug(
+                "Lead descartado sem telefone. site=%s nome=%s cidade=%s",
+                provider.source,
+                provider.name,
+                provider.city,
+            )
+            return
+
         if not self._deduplicator.register(provider):
             self._stats.skipped += 1
             return
