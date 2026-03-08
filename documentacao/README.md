@@ -10,5 +10,6 @@ Arquivos desta pasta:
 - `05-crawler-live-logs-e-stop.md`
 - `05-execucao-e-proximos-passos.md`
 - `06-reset-crawler-data.md`
+- `07-multiplas-profissoes.md`
 
 Objetivo: registrar cada etapa da implementacao do crawler multissite integrado ao ProFinder.

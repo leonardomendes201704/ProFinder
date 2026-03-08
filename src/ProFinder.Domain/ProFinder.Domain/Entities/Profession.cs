@@ -13,4 +13,8 @@ public class Profession : BaseEntity
     public ICollection<Professional> Professionals { get; set; } = [];
 
     public ICollection<ProviderLead> ProviderLeads { get; set; } = [];
+
+    public ICollection<ProfessionalProfession> ProfessionalProfessions { get; set; } = [];
+
+    public ICollection<ProviderLeadProfession> ProviderLeadProfessions { get; set; } = [];
 }

@@ -14,6 +14,8 @@ public class ProFinderDbContext : DbContext
 
     public DbSet<Professional> Professionals => Set<Professional>();
 
+    public DbSet<ProfessionalProfession> ProfessionalProfessions => Set<ProfessionalProfession>();
+
     public DbSet<Profession> Professions => Set<Profession>();
 
     public DbSet<Region> Regions => Set<Region>();
@@ -35,6 +37,8 @@ public class ProFinderDbContext : DbContext
     public DbSet<GoogleMapsLead> GoogleMapsLeads => Set<GoogleMapsLead>();
 
     public DbSet<ProviderLead> ProviderLeads => Set<ProviderLead>();
+
+    public DbSet<ProviderLeadProfession> ProviderLeadProfessions => Set<ProviderLeadProfession>();
 
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 

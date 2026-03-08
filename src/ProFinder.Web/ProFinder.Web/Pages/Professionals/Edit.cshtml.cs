@@ -31,6 +31,7 @@ public class EditModel : ProfessionalFormPageModel
                 Email = professional.Email,
                 DocumentNumber = professional.DocumentNumber,
                 ProfessionId = professional.ProfessionId,
+                ProfessionIds = professional.Professions.Select(x => x.Id).ToList(),
                 SourceId = professional.SourceId,
                 StatusId = professional.StatusId,
                 Notes = professional.Notes,

@@ -1,3 +1,5 @@
+using ProFinder.Application.Common;
+
 namespace ProFinder.Application.DTOs.ProviderLeads;
 
 public class ProviderLeadListItemDto
@@ -23,6 +25,10 @@ public class ProviderLeadListItemDto
     public string? Website { get; set; }
 
     public string? ProfessionName { get; set; }
+
+    public string ProfessionNamesDisplay { get; set; } = string.Empty;
+
+    public IReadOnlyList<LookupItemDto> Professions { get; set; } = [];
 
     public string? RegionDisplayName { get; set; }
 
@@ -94,6 +100,10 @@ public class ProviderLeadDetailsDto
     public string? RawPayloadJson { get; set; }
 
     public string? ProfessionName { get; set; }
+
+    public string ProfessionNamesDisplay { get; set; } = string.Empty;
+
+    public IReadOnlyList<LookupItemDto> Professions { get; set; } = [];
 
     public string? RegionDisplayName { get; set; }
 

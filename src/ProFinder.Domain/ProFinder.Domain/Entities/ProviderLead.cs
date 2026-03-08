@@ -73,4 +73,6 @@ public class ProviderLead : BaseEntity, IAuditableEntity
     public Region? Region { get; set; }
 
     public Professional? ImportedProfessional { get; set; }
+
+    public ICollection<ProviderLeadProfession> ProviderLeadProfessions { get; set; } = [];
 }

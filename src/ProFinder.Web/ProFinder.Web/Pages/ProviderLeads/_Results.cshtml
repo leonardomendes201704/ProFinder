@@ -20,7 +20,7 @@
                             <th>Contato</th>
                             <th>Localidade</th>
                             <th>Origem</th>
-                            <th>Profissao</th>
+                            <th>Profissoes</th>
                             <th>Status</th>
                             <th>Captado em</th>
                             <th class="text-end">Acoes</th>
@@ -46,7 +46,7 @@
                                 <div>@item.SourceName</div>
                                 <div class="small text-muted">@item.SiteKey</div>
                             </td>
-                            <td>@(item.ProfessionName ?? "-")</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.ProfessionNamesDisplay) ? "-" : item.ProfessionNamesDisplay)</td>
                             <td>
                                 <span class="badge bg-light text-dark border">@item.ImportStatus</span>
                                 <div class="small text-muted">@item.SourceCount fonte(s)</div>

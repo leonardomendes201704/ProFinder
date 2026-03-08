@@ -7,6 +7,7 @@ public static class TableNames
     public const string LeadStatuses = "prf_lead_statuses";
     public const string Regions = "prf_regions";
     public const string Professionals = "prf_professionals";
+    public const string ProfessionalProfessions = "prf_professional_professions";
     public const string ProfessionalRegions = "prf_professional_regions";
     public const string Interactions = "prf_interactions";
     public const string Evidences = "prf_evidences";
@@ -14,5 +15,6 @@ public static class TableNames
     public const string LeadCaptureLogs = "prf_lead_capture_logs";
     public const string GoogleMapsLeads = "prf_google_maps_leads";
     public const string ProviderLeads = "prf_provider_leads";
+    public const string ProviderLeadProfessions = "prf_provider_lead_professions";
     public const string AppSettings = "prf_app_settings";
 }

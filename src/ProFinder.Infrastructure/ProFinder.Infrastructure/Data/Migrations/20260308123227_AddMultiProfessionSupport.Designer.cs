@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProFinder.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ProFinder.Infrastructure.Data;
 namespace ProFinder.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ProFinderDbContext))]
-    partial class ProFinderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260308123227_AddMultiProfessionSupport")]
+    partial class AddMultiProfessionSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

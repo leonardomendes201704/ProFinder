@@ -7,7 +7,7 @@
 <div class="page-header">
     <div>
         <h1>@Model.Professional.FullName</h1>
-        <p>@Model.Professional.ProfessionName • @Model.Professional.StatusName</p>
+        <p>@Model.Professional.ProfessionNamesDisplay • @Model.Professional.StatusName</p>
     </div>
     <div class="d-flex gap-2">
         <a class="btn btn-outline-primary" asp-page="/Professionals/Edit" asp-route-id="@Model.Professional.Id">Editar</a>
@@ -33,14 +33,16 @@
                     <dd>@(string.IsNullOrWhiteSpace(Model.Professional.Email) ? "-" : Model.Professional.Email)</dd>
                     <dt>Origem</dt>
                     <dd>@Model.Professional.SourceName</dd>
+                    <dt>Profissoes</dt>
+                    <dd>@Model.Professional.ProfessionNamesDisplay</dd>
                     <dt>Website</dt>
                     <dd>@(string.IsNullOrWhiteSpace(Model.Professional.Website) ? "-" : Model.Professional.Website)</dd>
                     <dt>Instagram</dt>
                     <dd>@(string.IsNullOrWhiteSpace(Model.Professional.Instagram) ? "-" : Model.Professional.Instagram)</dd>
-                    <dt>Autônomo</dt>
-                    <dd>@(Model.Professional.IsAutonomous ? "Sim" : "Não")</dd>
+                    <dt>Autonomo</dt>
+                    <dd>@(Model.Professional.IsAutonomous ? "Sim" : "Nao")</dd>
                     <dt>Ativo</dt>
-                    <dd>@(Model.Professional.IsActive ? "Sim" : "Não")</dd>
+                    <dd>@(Model.Professional.IsActive ? "Sim" : "Nao")</dd>
                 </dl>
             </div>
         </div>
@@ -48,12 +50,12 @@
     <div class="col-lg-8">
         <div class="card mb-4">
             <div class="card-header bg-white">
-                <h2 class="h5 mb-0">Regiões de atuação</h2>
+                <h2 class="h5 mb-0">Regioes de atuacao</h2>
             </div>
             <div class="card-body p-0">
                 @if (Model.Professional.Regions.Count == 0)
                 {
-                    <div class="list-empty">Nenhuma região vinculada.</div>
+                    <div class="list-empty">Nenhuma regiao vinculada.</div>
                 }
                 else
                 {
@@ -61,8 +63,8 @@
                         <table class="table align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th>Região</th>
-                                    <th>Confiança</th>
+                                    <th>Regiao</th>
+                                    <th>Confianca</th>
                                     <th>Principal</th>
                                 </tr>
                             </thead>
@@ -72,7 +74,7 @@
                                     <tr>
                                         <td>@region.RegionDisplayName</td>
                                         <td>@region.ConfidenceLevel</td>
-                                        <td>@(region.IsPrimaryRegion ? "Sim" : "Não")</td>
+                                        <td>@(region.IsPrimaryRegion ? "Sim" : "Nao")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -84,16 +86,16 @@
 
         <div class="card mb-4">
             <div class="card-header bg-white">
-                <h2 class="h5 mb-0">Observações</h2>
+                <h2 class="h5 mb-0">Observacoes</h2>
             </div>
             <div class="card-body">
-                @(string.IsNullOrWhiteSpace(Model.Professional.Notes) ? "Nenhuma observação registrada." : Model.Professional.Notes)
+                @(string.IsNullOrWhiteSpace(Model.Professional.Notes) ? "Nenhuma observacao registrada." : Model.Professional.Notes)
             </div>
         </div>
 
         <div class="card">
             <div class="card-header bg-white">
-                <h2 class="h5 mb-0">Registrar interação</h2>
+                <h2 class="h5 mb-0">Registrar interacao</h2>
             </div>
             <div class="card-body">
                 <form method="post" asp-page-handler="AddInteraction">
@@ -120,7 +122,7 @@
                             <span asp-validation-for="NewInteraction.Description" class="text-danger"></span>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-3">Salvar interação</button>
+                    <button type="submit" class="btn btn-primary mt-3">Salvar interacao</button>
                 </form>
             </div>
         </div>
@@ -131,12 +133,12 @@
     <div class="col-lg-7">
         <div class="card h-100">
             <div class="card-header bg-white">
-                <h2 class="h5 mb-0">Histórico de interações</h2>
+                <h2 class="h5 mb-0">Historico de interacoes</h2>
             </div>
             <div class="card-body p-0">
                 @if (Model.Professional.Interactions.Count == 0)
                 {
-                    <div class="list-empty">Nenhuma interação registrada.</div>
+                    <div class="list-empty">Nenhuma interacao registrada.</div>
                 }
                 else
                 {
@@ -146,7 +148,7 @@
                                 <tr>
                                     <th>Data</th>
                                     <th>Tipo</th>
-                                    <th>Descrição</th>
+                                    <th>Descricao</th>
                                     <th>Criado por</th>
                                 </tr>
                             </thead>
@@ -170,12 +172,12 @@
     <div class="col-lg-5">
         <div class="card h-100">
             <div class="card-header bg-white">
-                <h2 class="h5 mb-0">Evidências e origem dos dados</h2>
+                <h2 class="h5 mb-0">Evidencias e origem dos dados</h2>
             </div>
             <div class="card-body p-0">
                 @if (Model.Professional.Evidences.Count == 0)
                 {
-                    <div class="list-empty">Nenhuma evidência registrada.</div>
+                    <div class="list-empty">Nenhuma evidencia registrada.</div>
                 }
                 else
                 {

@@ -43,6 +43,7 @@ public class ProfessionalConfiguration : IEntityTypeConfiguration<Professional>
         builder.HasIndex(x => x.WhatsApp);
         builder.HasIndex(x => x.Email);
         builder.HasIndex(x => x.IsActive);
+        builder.HasIndex(x => x.ProfessionId);
 
         builder.HasOne(x => x.Profession)
             .WithMany(x => x.Professionals)

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ProFinder.Application.Common;
 using ProFinder.Application.DTOs.Interactions;
 
 namespace ProFinder.Application.DTOs.Professionals;
@@ -18,6 +19,10 @@ public class ProfessionalListItemDto
     public string? Email { get; set; }
 
     public string ProfessionName { get; set; } = string.Empty;
+
+    public string ProfessionNamesDisplay { get; set; } = string.Empty;
+
+    public IReadOnlyList<LookupItemDto> Professions { get; set; } = [];
 
     public string StatusName { get; set; } = string.Empty;
 
@@ -49,6 +54,10 @@ public class ProfessionalDetailsDto
     public int ProfessionId { get; set; }
 
     public string ProfessionName { get; set; } = string.Empty;
+
+    public string ProfessionNamesDisplay { get; set; } = string.Empty;
+
+    public IReadOnlyList<LookupItemDto> Professions { get; set; } = [];
 
     public int SourceId { get; set; }
 
@@ -106,34 +115,37 @@ public class EvidenceDto
 public class UpsertProfessionalDto : IValidatableObject
 {
     [Required(ErrorMessage = "Informe o nome do profissional.")]
-    [StringLength(200, ErrorMessage = "O nome deve ter no máximo 200 caracteres.")]
+    [StringLength(200, ErrorMessage = "O nome deve ter no maximo 200 caracteres.")]
     [Display(Name = "Nome completo")]
     public string FullName { get; set; } = string.Empty;
 
-    [StringLength(200, ErrorMessage = "O nome comercial deve ter no máximo 200 caracteres.")]
+    [StringLength(200, ErrorMessage = "O nome comercial deve ter no maximo 200 caracteres.")]
     [Display(Name = "Nome comercial")]
     public string? BusinessName { get; set; }
 
-    [StringLength(20, ErrorMessage = "O telefone deve ter no máximo 20 caracteres.")]
+    [StringLength(20, ErrorMessage = "O telefone deve ter no maximo 20 caracteres.")]
     [Display(Name = "Telefone")]
     public string? Phone { get; set; }
 
-    [StringLength(20, ErrorMessage = "O WhatsApp deve ter no máximo 20 caracteres.")]
+    [StringLength(20, ErrorMessage = "O WhatsApp deve ter no maximo 20 caracteres.")]
     [Display(Name = "WhatsApp")]
     public string? WhatsApp { get; set; }
 
-    [EmailAddress(ErrorMessage = "Informe um e-mail válido.")]
-    [StringLength(150, ErrorMessage = "O e-mail deve ter no máximo 150 caracteres.")]
+    [EmailAddress(ErrorMessage = "Informe um e-mail valido.")]
+    [StringLength(150, ErrorMessage = "O e-mail deve ter no maximo 150 caracteres.")]
     [Display(Name = "E-mail")]
     public string? Email { get; set; }
 
-    [StringLength(30, ErrorMessage = "O documento deve ter no máximo 30 caracteres.")]
+    [StringLength(30, ErrorMessage = "O documento deve ter no maximo 30 caracteres.")]
     [Display(Name = "Documento")]
     public string? DocumentNumber { get; set; }
 
-    [Required(ErrorMessage = "Selecione a profissão.")]
-    [Display(Name = "Profissão")]
+    [Required(ErrorMessage = "Selecione a profissao principal.")]
+    [Display(Name = "Profissao principal")]
     public int ProfessionId { get; set; }
+
+    [Display(Name = "Profissoes")]
+    public List<int> ProfessionIds { get; set; } = [];
 
     [Required(ErrorMessage = "Selecione a origem do lead.")]
     [Display(Name = "Origem")]
@@ -143,29 +155,29 @@ public class UpsertProfessionalDto : IValidatableObject
     [Display(Name = "Status")]
     public int StatusId { get; set; }
 
-    [StringLength(2000, ErrorMessage = "As observações devem ter no máximo 2000 caracteres.")]
-    [Display(Name = "Observações")]
+    [StringLength(2000, ErrorMessage = "As observacoes devem ter no maximo 2000 caracteres.")]
+    [Display(Name = "Observacoes")]
     public string? Notes { get; set; }
 
-    [Url(ErrorMessage = "Informe uma URL válida.")]
-    [StringLength(200, ErrorMessage = "O website deve ter no máximo 200 caracteres.")]
+    [Url(ErrorMessage = "Informe uma URL valida.")]
+    [StringLength(200, ErrorMessage = "O website deve ter no maximo 200 caracteres.")]
     [Display(Name = "Website")]
     public string? Website { get; set; }
 
-    [StringLength(100, ErrorMessage = "O Instagram deve ter no máximo 100 caracteres.")]
+    [StringLength(100, ErrorMessage = "O Instagram deve ter no maximo 100 caracteres.")]
     [Display(Name = "Instagram")]
     public string? Instagram { get; set; }
 
-    [Display(Name = "Profissional autônomo")]
+    [Display(Name = "Profissional autonomo")]
     public bool IsAutonomous { get; set; } = true;
 
     [Display(Name = "Ativo")]
     public bool IsActive { get; set; } = true;
 
-    [Display(Name = "Regiões de atuação")]
+    [Display(Name = "Regioes de atuacao")]
     public List<int> RegionIds { get; set; } = [];
 
-    [Display(Name = "Região principal")]
+    [Display(Name = "Regiao principal")]
     public int? PrimaryRegionId { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -182,8 +194,22 @@ public class UpsertProfessionalDto : IValidatableObject
         if (PrimaryRegionId.HasValue && !RegionIds.Contains(PrimaryRegionId.Value))
         {
             yield return new ValidationResult(
-                "A região principal precisa estar entre as regiões selecionadas.",
+                "A regiao principal precisa estar entre as regioes selecionadas.",
                 [nameof(PrimaryRegionId), nameof(RegionIds)]);
+        }
+
+        if (ProfessionId <= 0)
+        {
+            yield return new ValidationResult(
+                "Selecione a profissao principal.",
+                [nameof(ProfessionId)]);
+        }
+
+        if (ProfessionIds.Count > 0 && !ProfessionIds.Contains(ProfessionId))
+        {
+            yield return new ValidationResult(
+                "A profissao principal precisa estar entre as profissoes selecionadas.",
+                [nameof(ProfessionId), nameof(ProfessionIds)]);
         }
     }
 }

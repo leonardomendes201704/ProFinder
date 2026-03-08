@@ -47,6 +47,12 @@
         </select>
         <span asp-validation-for="Input.SourceId" class="text-danger"></span>
     </div>
+    <div class="col-md-8">
+        <label asp-for="Input.ProfessionIds" class="form-label"></label>
+        <select asp-for="Input.ProfessionIds" asp-items="Model.ProfessionOptions" class="form-select" multiple></select>
+        <div class="form-text">Selecione todas as profissoes aplicaveis, incluindo a principal.</div>
+        <span asp-validation-for="Input.ProfessionIds" class="text-danger"></span>
+    </div>
     <div class="col-md-4">
         <label asp-for="Input.StatusId" class="form-label"></label>
         <select asp-for="Input.StatusId" asp-items="Model.StatusOptions" class="form-select">
@@ -57,7 +63,7 @@
     <div class="col-md-8">
         <label asp-for="Input.RegionIds" class="form-label"></label>
         <select asp-for="Input.RegionIds" asp-items="Model.RegionOptions" class="form-select" multiple></select>
-        <div class="form-text">Use Ctrl/Cmd para selecionar mais de uma região.</div>
+        <div class="form-text">Use Ctrl/Cmd para selecionar mais de uma regiao.</div>
         <span asp-validation-for="Input.RegionIds" class="text-danger"></span>
     </div>
     <div class="col-md-4">

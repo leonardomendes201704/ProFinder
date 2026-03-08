@@ -189,6 +189,7 @@ class MssqlStorage:
             """
             SELECT TOP 1
                    Id,
+                   ProfessionId,
                    SourceSitesJson,
                    SourceUrlsJson,
                    Phone,
@@ -204,9 +205,12 @@ class MssqlStorage:
             deduplication_key,
         ).fetchone()
 
-        source_sites_json = merge_json_array(None if not existing else existing[1], [provider.source])
+        current_primary_profession_id = int(existing[1]) if existing and existing[1] is not None else None
+        effective_primary_profession_id = current_primary_profession_id or profession_id
+
+        source_sites_json = merge_json_array(None if not existing else existing[2], [provider.source])
         source_urls_json = merge_json_array(
-            None if not existing else existing[2],
+            None if not existing else existing[3],
             [provider.source_details_url, provider.source_listing_url],
         )
         source_count = len(json.loads(source_sites_json))
@@ -250,19 +254,19 @@ class MssqlStorage:
                 """,
                 run_id,
                 lead_source_id,
-                profession_id,
+                effective_primary_profession_id,
                 region_id,
                 provider.source,
                 truncate(provider.search_query, 250),
                 truncate(provider.name, 200),
-                truncate(_pick_best_contact(existing[3], provider.phone), 30),
-                truncate(_pick_best_contact(existing[4], provider.whatsapp), 30),
+                truncate(_pick_best_contact(existing[4], provider.phone), 30),
+                truncate(_pick_best_contact(existing[5], provider.whatsapp), 30),
                 normalized_phone,
-                truncate(_pick_best_text(existing[5], provider.address), 300),
-                truncate(_pick_best_text(existing[6], provider.neighborhood), 120),
-                truncate(_pick_best_text(existing[7], provider.city), 120),
-                truncate(_pick_best_text(existing[8], provider.state), 10),
-                truncate(_pick_best_text(existing[9], provider.website), 250),
+                truncate(_pick_best_text(existing[6], provider.address), 300),
+                truncate(_pick_best_text(existing[7], provider.neighborhood), 120),
+                truncate(_pick_best_text(existing[8], provider.city), 120),
+                truncate(_pick_best_text(existing[9], provider.state), 10),
+                truncate(_pick_best_text(existing[10], provider.website), 250),
                 truncate(provider.source_listing_url, 500),
                 truncate(provider.source_details_url or provider.source_listing_url, 500),
                 truncate(provider.external_id, 120),
@@ -275,6 +279,12 @@ class MssqlStorage:
                 now,
                 now,
                 lead_id,
+            )
+            self._ensure_provider_lead_professions(
+                cursor,
+                lead_id=lead_id,
+                primary_profession_id=effective_primary_profession_id,
+                profession_ids=[effective_primary_profession_id, profession_id],
             )
             self._connection.commit()
             return PersistResult(action="updated", lead_id=lead_id)
@@ -347,8 +357,15 @@ class MssqlStorage:
             now,
         )
         row = cursor.fetchone()
+        lead_id = int(row[0])
+        self._ensure_provider_lead_professions(
+            cursor,
+            lead_id=lead_id,
+            primary_profession_id=effective_primary_profession_id,
+            profession_ids=[effective_primary_profession_id, profession_id],
+        )
         self._connection.commit()
-        return PersistResult(action="inserted", lead_id=int(row[0]))
+        return PersistResult(action="inserted", lead_id=lead_id)
 
     def export_run(self, run_id: int, export_dir: Path) -> tuple[Path, Path]:
         export_dir.mkdir(parents=True, exist_ok=True)
@@ -417,6 +434,53 @@ class MssqlStorage:
                 f"Origem '{expected_name}' nao encontrada em prf_lead_sources. Cadastre/ative a origem no admin."
             )
         return self._source_ids[expected_name]
+
+    def _ensure_provider_lead_professions(
+        self,
+        cursor: pyodbc.Cursor,
+        *,
+        lead_id: int,
+        primary_profession_id: int | None,
+        profession_ids: list[int | None],
+    ) -> None:
+        distinct_profession_ids = [profession_id for profession_id in dict.fromkeys(profession_ids) if profession_id is not None]
+
+        for profession_id in distinct_profession_ids:
+            cursor.execute(
+                """
+                IF NOT EXISTS (
+                    SELECT 1
+                      FROM prf_provider_lead_professions
+                     WHERE ProviderLeadId = ?
+                       AND ProfessionId = ?
+                )
+                BEGIN
+                    INSERT INTO prf_provider_lead_professions
+                    (
+                        ProviderLeadId,
+                        ProfessionId,
+                        IsPrimary
+                    )
+                    VALUES (?, ?, ?)
+                END
+                """,
+                lead_id,
+                profession_id,
+                lead_id,
+                profession_id,
+                1 if profession_id == primary_profession_id else 0,
+            )
+
+        if primary_profession_id is not None:
+            cursor.execute(
+                """
+                UPDATE prf_provider_lead_professions
+                   SET IsPrimary = CASE WHEN ProfessionId = ? THEN 1 ELSE 0 END
+                 WHERE ProviderLeadId = ?
+                """,
+                primary_profession_id,
+                lead_id,
+            )
 
     def _cursor(self) -> pyodbc.Cursor:
         if self._connection is None:

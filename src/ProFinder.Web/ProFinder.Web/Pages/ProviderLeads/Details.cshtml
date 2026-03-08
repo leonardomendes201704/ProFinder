@@ -56,8 +56,8 @@
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Lote</dt>
                     <dd class="col-sm-8">#@Model.Item.LeadCaptureRunId</dd>
-                    <dt class="col-sm-4">Profissao</dt>
-                    <dd class="col-sm-8">@(Model.Item.ProfessionName ?? "-")</dd>
+                    <dt class="col-sm-4">Profissoes</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Item.ProfessionNamesDisplay) ? "-" : Model.Item.ProfessionNamesDisplay)</dd>
                     <dt class="col-sm-4">Regiao</dt>
                     <dd class="col-sm-8">@(Model.Item.RegionDisplayName ?? "-")</dd>
                     <dt class="col-sm-4">Fonte(s)</dt>

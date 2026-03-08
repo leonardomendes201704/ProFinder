@@ -28,6 +28,8 @@ public class ProfessionalService : IProfessionalService
         var query = _context.Professionals
             .AsNoTracking()
             .Include(x => x.Profession)
+            .Include(x => x.ProfessionalProfessions)
+                .ThenInclude(x => x.Profession)
             .Include(x => x.Status)
             .Include(x => x.Source)
             .Include(x => x.ProfessionalRegions)
@@ -53,7 +55,9 @@ public class ProfessionalService : IProfessionalService
 
         if (filter.ProfessionId.HasValue)
         {
-            query = query.Where(x => x.ProfessionId == filter.ProfessionId.Value);
+            query = query.Where(x =>
+                x.ProfessionId == filter.ProfessionId.Value ||
+                x.ProfessionalProfessions.Any(y => y.ProfessionId == filter.ProfessionId.Value));
         }
 
         if (filter.StatusId.HasValue)
@@ -100,6 +104,8 @@ public class ProfessionalService : IProfessionalService
         var professional = await _context.Professionals
             .AsNoTracking()
             .Include(x => x.Profession)
+            .Include(x => x.ProfessionalProfessions)
+                .ThenInclude(x => x.Profession)
             .Include(x => x.Status)
             .Include(x => x.Source)
             .Include(x => x.ProfessionalRegions)
@@ -108,7 +114,9 @@ public class ProfessionalService : IProfessionalService
             .Include(x => x.Evidences)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new NotFoundException("Profissional não encontrado.");
+            ?? throw new NotFoundException("Profissional nao encontrado.");
+
+        var professions = BuildProfessionLookups(professional.ProfessionalProfessions, professional.Profession);
 
         return new ProfessionalDetailsDto
         {
@@ -121,6 +129,8 @@ public class ProfessionalService : IProfessionalService
             DocumentNumber = professional.DocumentNumber,
             ProfessionId = professional.ProfessionId,
             ProfessionName = professional.Profession?.Name ?? string.Empty,
+            ProfessionNamesDisplay = BuildProfessionNamesDisplay(professions, professional.Profession?.Name),
+            Professions = professions,
             SourceId = professional.SourceId,
             SourceName = professional.Source?.Name ?? string.Empty,
             StatusId = professional.StatusId,
@@ -177,7 +187,9 @@ public class ProfessionalService : IProfessionalService
 
     public async Task<int> CreateAsync(UpsertProfessionalDto dto, CancellationToken cancellationToken = default)
     {
-        await EnsureLookupReferencesAsync(dto.ProfessionId, dto.SourceId, dto.StatusId, dto.RegionIds, cancellationToken);
+        var professionIds = GetEffectiveProfessionIds(dto);
+
+        await EnsureLookupReferencesAsync(professionIds, dto.SourceId, dto.StatusId, dto.RegionIds, cancellationToken);
         var normalized = NormalizeProfessional(dto);
         await EnsureProfessionalIsUniqueAsync(normalized.Phone, normalized.WhatsApp, normalized.Email, null, cancellationToken);
 
@@ -199,6 +211,7 @@ public class ProfessionalService : IProfessionalService
             IsActive = dto.IsActive
         };
 
+        ApplyProfessions(professional, professionIds, dto.ProfessionId);
         ApplyRegions(professional, dto.RegionIds, dto.PrimaryRegionId);
 
         _context.Professionals.Add(professional);
@@ -210,14 +223,17 @@ public class ProfessionalService : IProfessionalService
 
     public async Task UpdateAsync(int id, UpsertProfessionalDto dto, CancellationToken cancellationToken = default)
     {
-        await EnsureLookupReferencesAsync(dto.ProfessionId, dto.SourceId, dto.StatusId, dto.RegionIds, cancellationToken);
+        var professionIds = GetEffectiveProfessionIds(dto);
+
+        await EnsureLookupReferencesAsync(professionIds, dto.SourceId, dto.StatusId, dto.RegionIds, cancellationToken);
         var normalized = NormalizeProfessional(dto);
         await EnsureProfessionalIsUniqueAsync(normalized.Phone, normalized.WhatsApp, normalized.Email, id, cancellationToken);
 
         var professional = await _context.Professionals
             .Include(x => x.ProfessionalRegions)
+            .Include(x => x.ProfessionalProfessions)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new NotFoundException("Profissional não encontrado.");
+            ?? throw new NotFoundException("Profissional nao encontrado.");
 
         professional.FullName = normalized.FullName;
         professional.BusinessName = normalized.BusinessName;
@@ -238,6 +254,10 @@ public class ProfessionalService : IProfessionalService
         professional.ProfessionalRegions.Clear();
         ApplyRegions(professional, dto.RegionIds, dto.PrimaryRegionId);
 
+        _context.ProfessionalProfessions.RemoveRange(professional.ProfessionalProfessions);
+        professional.ProfessionalProfessions.Clear();
+        ApplyProfessions(professional, professionIds, dto.ProfessionId);
+
         await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Professional {ProfessionalId} updated.", professional.Id);
     }
@@ -245,7 +265,7 @@ public class ProfessionalService : IProfessionalService
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var professional = await _context.Professionals.FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
-            ?? throw new NotFoundException("Profissional não encontrado.");
+            ?? throw new NotFoundException("Profissional nao encontrado.");
 
         professional.IsActive = false;
         await _context.SaveChangesAsync(cancellationToken);
@@ -254,19 +274,26 @@ public class ProfessionalService : IProfessionalService
     }
 
     private async Task EnsureLookupReferencesAsync(
-        int professionId,
+        IReadOnlyCollection<int> professionIds,
         int sourceId,
         int statusId,
         IEnumerable<int> regionIds,
         CancellationToken cancellationToken)
     {
-        var professionExists = await _context.Professions.AnyAsync(x => x.Id == professionId && x.IsActive, cancellationToken);
+        if (professionIds.Count == 0)
+        {
+            throw new ValidationException("Selecione ao menos uma profissao.");
+        }
+
+        var existingProfessionCount = await _context.Professions.CountAsync(
+            x => professionIds.Contains(x.Id) && x.IsActive,
+            cancellationToken);
         var sourceExists = await _context.LeadSources.AnyAsync(x => x.Id == sourceId && x.IsActive, cancellationToken);
         var statusExists = await _context.LeadStatuses.AnyAsync(x => x.Id == statusId && x.IsActive, cancellationToken);
 
-        if (!professionExists || !sourceExists || !statusExists)
+        if (existingProfessionCount != professionIds.Count || !sourceExists || !statusExists)
         {
-            throw new ValidationException("Profissão, origem ou status inválido.");
+            throw new ValidationException("Profissao, origem ou status invalido.");
         }
 
         var distinctRegionIds = regionIds.Distinct().ToList();
@@ -281,7 +308,7 @@ public class ProfessionalService : IProfessionalService
 
         if (existingCount != distinctRegionIds.Count)
         {
-            throw new ValidationException("Uma ou mais regiões informadas não existem ou estão inativas.");
+            throw new ValidationException("Uma ou mais regioes informadas nao existem ou estao inativas.");
         }
     }
 
@@ -304,7 +331,7 @@ public class ProfessionalService : IProfessionalService
 
         if (exists)
         {
-            throw new DuplicateResourceException("Já existe um profissional ativo com o mesmo telefone, WhatsApp ou e-mail.");
+            throw new DuplicateResourceException("Ja existe um profissional ativo com o mesmo telefone, WhatsApp ou e-mail.");
         }
     }
 
@@ -314,7 +341,7 @@ public class ProfessionalService : IProfessionalService
 
         if (string.IsNullOrWhiteSpace(fullName))
         {
-            throw new ValidationException("O nome do profissional é obrigatório.");
+            throw new ValidationException("O nome do profissional e obrigatorio.");
         }
 
         return
@@ -329,6 +356,27 @@ public class ProfessionalService : IProfessionalService
             NormalizeOptional(dto.Website),
             NormalizeOptional(dto.Instagram)
         );
+    }
+
+    private static IReadOnlyList<int> GetEffectiveProfessionIds(UpsertProfessionalDto dto)
+    {
+        return dto.ProfessionIds
+            .Append(dto.ProfessionId)
+            .Where(x => x > 0)
+            .Distinct()
+            .ToList();
+    }
+
+    private static void ApplyProfessions(Professional professional, IReadOnlyCollection<int> professionIds, int primaryProfessionId)
+    {
+        foreach (var professionId in professionIds.Distinct())
+        {
+            professional.ProfessionalProfessions.Add(new ProfessionalProfession
+            {
+                ProfessionId = professionId,
+                IsPrimary = professionId == primaryProfessionId
+            });
+        }
     }
 
     private static void ApplyRegions(Professional professional, IReadOnlyCollection<int> regionIds, int? primaryRegionId)
@@ -347,7 +395,7 @@ public class ProfessionalService : IProfessionalService
             professional.ProfessionalRegions.Add(new ProfessionalRegion
             {
                 RegionId = regionId,
-                ConfidenceLevel = regionId == effectivePrimaryRegionId ? "Alta" : "Média",
+                ConfidenceLevel = regionId == effectivePrimaryRegionId ? "Alta" : "Media",
                 IsPrimaryRegion = regionId == effectivePrimaryRegionId
             });
         }
@@ -359,6 +407,7 @@ public class ProfessionalService : IProfessionalService
             .OrderByDescending(x => x.IsPrimaryRegion)
             .Select(x => x.Region)
             .FirstOrDefault();
+        var professions = BuildProfessionLookups(professional.ProfessionalProfessions, professional.Profession);
 
         return new ProfessionalListItemDto
         {
@@ -369,12 +418,52 @@ public class ProfessionalService : IProfessionalService
             WhatsApp = professional.WhatsApp,
             Email = professional.Email,
             ProfessionName = professional.Profession?.Name ?? string.Empty,
+            ProfessionNamesDisplay = BuildProfessionNamesDisplay(professions, professional.Profession?.Name),
+            Professions = professions,
             StatusName = professional.Status?.Name ?? string.Empty,
             SourceName = professional.Source?.Name ?? string.Empty,
             PrimaryRegionDisplay = BuildRegionDisplay(primaryRegion),
             IsActive = professional.IsActive,
             CreatedAt = professional.CreatedAt
         };
+    }
+
+    private static IReadOnlyList<LookupItemDto> BuildProfessionLookups(
+        IEnumerable<ProfessionalProfession> relations,
+        Profession? primaryProfession)
+    {
+        var items = relations
+            .Where(x => x.Profession is not null)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Profession!.Name)
+            .Select(x => new LookupItemDto
+            {
+                Id = x.ProfessionId,
+                Name = x.Profession!.Name
+            })
+            .DistinctBy(x => x.Id)
+            .ToList();
+
+        if (primaryProfession is not null && items.All(x => x.Id != primaryProfession.Id))
+        {
+            items.Insert(0, new LookupItemDto
+            {
+                Id = primaryProfession.Id,
+                Name = primaryProfession.Name
+            });
+        }
+
+        return items;
+    }
+
+    private static string BuildProfessionNamesDisplay(IReadOnlyList<LookupItemDto> professions, string? fallbackName)
+    {
+        if (professions.Count > 0)
+        {
+            return string.Join(", ", professions.Select(x => x.Name));
+        }
+
+        return fallbackName ?? string.Empty;
     }
 
     private static InteractionDto MapInteractionToDto(Interaction interaction) =>
@@ -394,7 +483,7 @@ public class ProfessionalService : IProfessionalService
     {
         if (region is null)
         {
-            return "Não informado";
+            return "Nao informado";
         }
 
         return string.Join(" / ", new[] { region.State, region.City, region.Neighborhood, region.Zone }

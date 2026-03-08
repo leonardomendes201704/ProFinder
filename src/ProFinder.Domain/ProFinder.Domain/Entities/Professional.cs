@@ -44,6 +44,8 @@ public class Professional : BaseEntity, IAuditableEntity
 
     public ICollection<ProfessionalRegion> ProfessionalRegions { get; set; } = [];
 
+    public ICollection<ProfessionalProfession> ProfessionalProfessions { get; set; } = [];
+
     public ICollection<Interaction> Interactions { get; set; } = [];
 
     public ICollection<Evidence> Evidences { get; set; } = [];

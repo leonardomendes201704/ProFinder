@@ -7,7 +7,7 @@
 <div class="page-header">
     <div>
         <h1>Profissionais</h1>
-        <p>Busque, filtre e acompanhe os leads profissionais por região e status.</p>
+        <p>Busque, filtre e acompanhe os leads profissionais por regiao e status.</p>
     </div>
     <a class="btn btn-primary" asp-page="/Professionals/Create">Cadastrar profissional</a>
 </div>
@@ -20,7 +20,7 @@
                 <input asp-for="SearchTerm" class="form-control" placeholder="Nome, telefone, WhatsApp ou e-mail" />
             </div>
             <div class="col-md-2">
-                <label asp-for="ProfessionId" class="form-label">Profissão</label>
+                <label asp-for="ProfessionId" class="form-label">Profissao</label>
                 <select asp-for="ProfessionId" asp-items="Model.ProfessionOptions" class="form-select">
                     <option value="">Todas</option>
                 </select>
@@ -50,7 +50,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label asp-for="PageSize" class="form-label">Itens por página</label>
+                <label asp-for="PageSize" class="form-label">Itens por pagina</label>
                 <select asp-for="PageSize" class="form-select">
                     <option value="10">10</option>
                     <option value="20">20</option>
@@ -83,10 +83,10 @@
                         <tr>
                             <th>Profissional</th>
                             <th>Contato</th>
-                            <th>Profissão</th>
+                            <th>Profissoes</th>
                             <th>Status</th>
                             <th>Origem</th>
-                            <th>Região principal</th>
+                            <th>Regiao principal</th>
                             <th>Cadastrado em</th>
                             <th></th>
                         </tr>
@@ -103,7 +103,7 @@
                                     <div>@item.Phone</div>
                                     <div class="text-muted small">@item.Email</div>
                                 </td>
-                                <td>@item.ProfessionName</td>
+                                <td>@item.ProfessionNamesDisplay</td>
                                 <td>@item.StatusName</td>
                                 <td>@item.SourceName</td>
                                 <td>@item.PrimaryRegionDisplay</td>
@@ -127,7 +127,7 @@
     @if (Model.Result.TotalPages > 1)
     {
         <div class="card-footer bg-white">
-            <nav aria-label="Paginação de profissionais">
+            <nav aria-label="Paginacao de profissionais">
                 <ul class="pagination mb-0">
                     <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : null)">
                         <a class="page-link"
@@ -166,7 +166,7 @@
                            asp-route-City="@Model.City"
                            asp-route-Neighborhood="@Model.Neighborhood"
                            asp-route-PageSize="@Model.PageSize"
-                           asp-route-PageNumber="@(Model.PageNumber + 1)">Próxima</a>
+                           asp-route-PageNumber="@(Model.PageNumber + 1)">Proxima</a>
                     </li>
                 </ul>
             </nav>

@@ -23,6 +23,8 @@ public class ProviderLeadService : IProviderLeadService
         var query = _context.ProviderLeads
             .AsNoTracking()
             .Include(x => x.Profession)
+            .Include(x => x.ProviderLeadProfessions)
+                .ThenInclude(x => x.Profession)
             .Include(x => x.Region)
             .Include(x => x.LeadSource)
             .AsSplitQuery()
@@ -47,7 +49,9 @@ public class ProviderLeadService : IProviderLeadService
 
         if (filter.ProfessionId.HasValue)
         {
-            query = query.Where(x => x.ProfessionId == filter.ProfessionId.Value);
+            query = query.Where(x =>
+                x.ProfessionId == filter.ProfessionId.Value ||
+                x.ProviderLeadProfessions.Any(y => y.ProfessionId == filter.ProfessionId.Value));
         }
 
         if (filter.RegionId.HasValue)
@@ -101,11 +105,16 @@ public class ProviderLeadService : IProviderLeadService
         var entity = await _context.ProviderLeads
             .AsNoTracking()
             .Include(x => x.Profession)
+            .Include(x => x.ProviderLeadProfessions)
+                .ThenInclude(x => x.Profession)
             .Include(x => x.Region)
             .Include(x => x.LeadSource)
             .Include(x => x.ImportedProfessional)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
             ?? throw new NotFoundException("Lead capturado nao encontrado.");
+
+        var professions = BuildProfessionLookups(entity.ProviderLeadProfessions, entity.Profession);
 
         return new ProviderLeadDetailsDto
         {
@@ -138,6 +147,8 @@ public class ProviderLeadService : IProviderLeadService
             ReviewCount = entity.ReviewCount,
             RawPayloadJson = entity.RawPayloadJson,
             ProfessionName = entity.Profession?.Name,
+            ProfessionNamesDisplay = BuildProfessionNamesDisplay(professions, entity.Profession?.Name),
+            Professions = professions,
             RegionDisplayName = BuildRegionDisplay(entity.Region),
             SourceName = entity.LeadSource?.Name ?? string.Empty,
             ImportedProfessionalName = entity.ImportedProfessional?.FullName,
@@ -147,8 +158,11 @@ public class ProviderLeadService : IProviderLeadService
         };
     }
 
-    private static ProviderLeadListItemDto MapToListItem(ProviderLead entity) =>
-        new()
+    private static ProviderLeadListItemDto MapToListItem(ProviderLead entity)
+    {
+        var professions = BuildProfessionLookups(entity.ProviderLeadProfessions, entity.Profession);
+
+        return new ProviderLeadListItemDto
         {
             Id = entity.Id,
             LeadCaptureRunId = entity.LeadCaptureRunId,
@@ -161,12 +175,53 @@ public class ProviderLeadService : IProviderLeadService
             State = entity.State,
             Website = entity.Website,
             ProfessionName = entity.Profession?.Name,
+            ProfessionNamesDisplay = BuildProfessionNamesDisplay(professions, entity.Profession?.Name),
+            Professions = professions,
             RegionDisplayName = BuildRegionDisplay(entity.Region),
             SourceName = entity.LeadSource?.Name ?? string.Empty,
             ImportStatus = entity.ImportStatus,
             SourceCount = entity.SourceCount,
             ScrapedAt = entity.ScrapedAt
         };
+    }
+
+    private static IReadOnlyList<LookupItemDto> BuildProfessionLookups(
+        IEnumerable<ProviderLeadProfession> relations,
+        Profession? primaryProfession)
+    {
+        var items = relations
+            .Where(x => x.Profession is not null)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.Profession!.Name)
+            .Select(x => new LookupItemDto
+            {
+                Id = x.ProfessionId,
+                Name = x.Profession!.Name
+            })
+            .DistinctBy(x => x.Id)
+            .ToList();
+
+        if (primaryProfession is not null && items.All(x => x.Id != primaryProfession.Id))
+        {
+            items.Insert(0, new LookupItemDto
+            {
+                Id = primaryProfession.Id,
+                Name = primaryProfession.Name
+            });
+        }
+
+        return items;
+    }
+
+    private static string BuildProfessionNamesDisplay(IReadOnlyList<LookupItemDto> professions, string? fallbackName)
+    {
+        if (professions.Count > 0)
+        {
+            return string.Join(", ", professions.Select(x => x.Name));
+        }
+
+        return fallbackName ?? string.Empty;
+    }
 
     private static string? BuildRegionDisplay(Region? region)
     {

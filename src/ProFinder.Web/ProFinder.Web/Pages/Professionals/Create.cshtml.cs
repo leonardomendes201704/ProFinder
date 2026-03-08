@@ -19,6 +19,7 @@ public class CreateModel : ProfessionalFormPageModel
         await LoadOptionsAsync(cancellationToken);
         Input.IsAutonomous = true;
         Input.IsActive = true;
+        Input.ProfessionIds = [];
     }
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)

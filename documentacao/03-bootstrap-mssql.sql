@@ -74,6 +74,83 @@ BEGIN
 END;
 GO
 
+IF OBJECT_ID('dbo.prf_professional_professions', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.prf_professional_professions
+    (
+        Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_prf_professional_professions PRIMARY KEY,
+        ProfessionalId INT NOT NULL,
+        ProfessionId INT NOT NULL,
+        IsPrimary BIT NOT NULL CONSTRAINT DF_prf_professional_professions_IsPrimary DEFAULT(0),
+        CONSTRAINT FK_prf_professional_professions_professionals FOREIGN KEY (ProfessionalId) REFERENCES dbo.prf_professionals(Id) ON DELETE CASCADE,
+        CONSTRAINT FK_prf_professional_professions_professions FOREIGN KEY (ProfessionId) REFERENCES dbo.prf_professions(Id)
+    );
+
+    CREATE UNIQUE INDEX IX_prf_professional_professions_ProfessionalId_ProfessionId
+        ON dbo.prf_professional_professions(ProfessionalId, ProfessionId);
+    CREATE INDEX IX_prf_professional_professions_ProfessionId
+        ON dbo.prf_professional_professions(ProfessionId);
+END;
+GO
+
+IF OBJECT_ID('dbo.prf_provider_lead_professions', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.prf_provider_lead_professions
+    (
+        Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_prf_provider_lead_professions PRIMARY KEY,
+        ProviderLeadId INT NOT NULL,
+        ProfessionId INT NOT NULL,
+        IsPrimary BIT NOT NULL CONSTRAINT DF_prf_provider_lead_professions_IsPrimary DEFAULT(0),
+        CONSTRAINT FK_prf_provider_lead_professions_provider_leads FOREIGN KEY (ProviderLeadId) REFERENCES dbo.prf_provider_leads(Id) ON DELETE CASCADE,
+        CONSTRAINT FK_prf_provider_lead_professions_professions FOREIGN KEY (ProfessionId) REFERENCES dbo.prf_professions(Id)
+    );
+
+    CREATE UNIQUE INDEX IX_prf_provider_lead_professions_ProviderLeadId_ProfessionId
+        ON dbo.prf_provider_lead_professions(ProviderLeadId, ProfessionId);
+    CREATE INDEX IX_prf_provider_lead_professions_ProfessionId
+        ON dbo.prf_provider_lead_professions(ProfessionId);
+END;
+GO
+
+INSERT INTO dbo.prf_professional_professions
+(
+    ProfessionalId,
+    ProfessionId,
+    IsPrimary
+)
+SELECT p.Id,
+       p.ProfessionId,
+       1
+  FROM dbo.prf_professionals p
+ WHERE NOT EXISTS
+(
+    SELECT 1
+      FROM dbo.prf_professional_professions pp
+     WHERE pp.ProfessionalId = p.Id
+       AND pp.ProfessionId = p.ProfessionId
+);
+GO
+
+INSERT INTO dbo.prf_provider_lead_professions
+(
+    ProviderLeadId,
+    ProfessionId,
+    IsPrimary
+)
+SELECT pl.Id,
+       pl.ProfessionId,
+       1
+  FROM dbo.prf_provider_leads pl
+ WHERE pl.ProfessionId IS NOT NULL
+   AND NOT EXISTS
+(
+    SELECT 1
+      FROM dbo.prf_provider_lead_professions plp
+     WHERE plp.ProviderLeadId = pl.Id
+       AND plp.ProfessionId = pl.ProfessionId
+);
+GO
+
 IF OBJECT_ID('dbo.prf_lead_capture_logs', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.prf_lead_capture_logs
