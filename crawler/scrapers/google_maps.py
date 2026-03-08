@@ -213,6 +213,8 @@ class GoogleMapsScraper(BaseScraper):
         except Exception:
             return None
 
+        current_url = driver.current_url or href
+
         phone = None
         address = None
         website = None
@@ -253,6 +255,7 @@ class GoogleMapsScraper(BaseScraper):
 
         raw_payload = {
             "place_url": href,
+            "details_url": current_url,
             "search_query": search_query,
             "name": name,
             "phone": phone,
@@ -271,7 +274,7 @@ class GoogleMapsScraper(BaseScraper):
             website=website,
             source=self.site_key,
             source_listing_url=href,
-            source_details_url=href,
+            source_details_url=current_url,
             rating=rating,
             review_count=review_count,
             search_query=search_query,

@@ -36,6 +36,10 @@ public class ProviderLead : BaseEntity, IAuditableEntity
 
     public string? State { get; set; }
 
+    public decimal? Latitude { get; set; }
+
+    public decimal? Longitude { get; set; }
+
     public string? Website { get; set; }
 
     public string? SourceListingUrl { get; set; }

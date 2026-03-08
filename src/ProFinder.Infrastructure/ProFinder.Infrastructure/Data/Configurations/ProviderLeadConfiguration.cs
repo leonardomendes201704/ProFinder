@@ -47,6 +47,12 @@ public class ProviderLeadConfiguration : IEntityTypeConfiguration<ProviderLead>
         builder.Property(x => x.State)
             .HasMaxLength(10);
 
+        builder.Property(x => x.Latitude)
+            .HasPrecision(9, 6);
+
+        builder.Property(x => x.Longitude)
+            .HasPrecision(9, 6);
+
         builder.Property(x => x.Website)
             .HasMaxLength(250);
 

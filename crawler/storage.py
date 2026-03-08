@@ -10,7 +10,9 @@ from typing import Any
 import pandas as pd
 import pyodbc
 
+from crawler.config import CrawlerSettings
 from crawler.models.provider import Provider
+from crawler.utils.geolocation import ProviderGeolocator
 from crawler.utils.parser import (
     build_deduplication_key,
     extract_address_locality,
@@ -41,12 +43,17 @@ class MssqlStorage:
         self._logger = logger.getChild("storage")
         self._connection: pyodbc.Connection | None = None
         self._source_ids: dict[str, int] = {}
+        self._geolocator: ProviderGeolocator | None = None
 
     def connect(self) -> None:
         self._connection = pyodbc.connect(self._connection_string, autocommit=False)
         self._source_ids = self._load_source_ids()
 
     def close(self) -> None:
+        if self._geolocator is not None:
+            self._geolocator.close()
+            self._geolocator = None
+
         if self._connection:
             self._connection.close()
             self._connection = None
@@ -61,6 +68,9 @@ class MssqlStorage:
             """
         ).fetchall()
         return {str(row[0]): str(row[1]) for row in rows}
+
+    def configure(self, settings: CrawlerSettings) -> None:
+        self._geolocator = ProviderGeolocator(settings, self._logger)
 
     def is_stop_requested(self, run_id: int) -> bool:
         try:
@@ -184,6 +194,9 @@ class MssqlStorage:
         profession_id: int | None,
         region_id: int | None,
     ) -> PersistResult:
+        if self._geolocator is not None:
+            provider = self._geolocator.enrich(provider)
+
         sanitized_phone = sanitize_extracted_text(provider.phone)
         sanitized_whatsapp = sanitize_extracted_text(provider.whatsapp)
         sanitized_address = sanitize_extracted_text(provider.address)
@@ -213,6 +226,8 @@ class MssqlStorage:
                    Neighborhood,
                    City,
                    State,
+                   Latitude,
+                   Longitude,
                    Website
               FROM prf_provider_leads
              WHERE DeduplicationKey = ?
@@ -249,6 +264,8 @@ class MssqlStorage:
                        Neighborhood = ?,
                        City = ?,
                        State = ?,
+                       Latitude = ?,
+                       Longitude = ?,
                        Website = ?,
                        SourceListingUrl = ?,
                        SourceDetailsUrl = ?,
@@ -281,7 +298,9 @@ class MssqlStorage:
                 truncate(_pick_best_text(existing[7], locality.neighborhood), 120),
                 truncate(_pick_best_text(existing[8], locality.city), 120),
                 truncate(_pick_best_text(existing[9], locality.state), 10),
-                truncate(_pick_best_text(existing[10], provider.website), 250),
+                _pick_best_coordinate(existing[10], provider.latitude),
+                _pick_best_coordinate(existing[11], provider.longitude),
+                truncate(_pick_best_text(existing[12], provider.website), 250),
                 truncate(provider.source_listing_url, 500),
                 truncate(provider.source_details_url or provider.source_listing_url, 500),
                 truncate(provider.external_id, 120),
@@ -324,6 +343,8 @@ class MssqlStorage:
                 Neighborhood,
                 City,
                 State,
+                Latitude,
+                Longitude,
                 Website,
                 SourceListingUrl,
                 SourceDetailsUrl,
@@ -340,7 +361,41 @@ class MssqlStorage:
                 UpdatedAt
             )
             OUTPUT INSERTED.Id
-            VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Captured', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES
+            (
+                ?,
+                ?,
+                ?,
+                ?,
+                NULL,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                'Captured',
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
+            )
             """,
             run_id,
             lead_source_id,
@@ -357,6 +412,8 @@ class MssqlStorage:
             truncate(locality.neighborhood, 120),
             truncate(locality.city, 120),
             truncate(locality.state, 10),
+            provider.latitude,
+            provider.longitude,
             truncate(provider.website, 250),
             truncate(provider.source_listing_url, 500),
             truncate(provider.source_details_url or provider.source_listing_url, 500),
@@ -393,6 +450,8 @@ class MssqlStorage:
                    Neighborhood,
                    City,
                    State,
+                   Latitude,
+                   Longitude,
                    Website,
                    SiteKey,
                    SearchQuery,
@@ -418,15 +477,17 @@ class MssqlStorage:
                 "neighborhood": row[4],
                 "city": row[5],
                 "state": row[6],
-                "website": row[7],
-                "source": row[8],
-                "search_query": row[9],
-                "source_listing_url": row[10],
-                "source_details_url": row[11],
-                "source_count": row[12],
-                "rating": row[13],
-                "review_count": row[14],
-                "scraped_at": row[15].isoformat() if row[15] else None,
+                "latitude": float(row[7]) if row[7] is not None else None,
+                "longitude": float(row[8]) if row[8] is not None else None,
+                "website": row[9],
+                "source": row[10],
+                "search_query": row[11],
+                "source_listing_url": row[12],
+                "source_details_url": row[13],
+                "source_count": row[14],
+                "rating": row[15],
+                "review_count": row[16],
+                "scraped_at": row[17].isoformat() if row[17] else None,
             }
             for row in rows
         ]
@@ -525,3 +586,16 @@ def _pick_best_text(existing: Any, incoming: str | None) -> str | None:
         return incoming_text
 
     return existing_text or incoming_text
+
+
+def _pick_best_coordinate(existing: Any, incoming: float | None) -> float | None:
+    if incoming is not None:
+        return incoming
+
+    if existing is None:
+        return None
+
+    try:
+        return float(existing)
+    except (TypeError, ValueError):
+        return None

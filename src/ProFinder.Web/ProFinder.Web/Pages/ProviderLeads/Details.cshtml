@@ -30,6 +30,20 @@
                     <dd class="col-sm-8">@(Model.Item.Address ?? "-")</dd>
                     <dt class="col-sm-4">Localidade</dt>
                     <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Item.LocalityDisplay) ? "-" : Model.Item.LocalityDisplay)</dd>
+                    <dt class="col-sm-4">Geolocalizacao</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Item.Latitude.HasValue && Model.Item.Longitude.HasValue)
+                        {
+                            <div>@Model.Item.Latitude.Value.ToString("0.000000") / @Model.Item.Longitude.Value.ToString("0.000000")</div>
+                            <div class="small">
+                                <a href="https://www.google.com/maps?q=@Model.Item.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),@Model.Item.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)" target="_blank" rel="noreferrer">Abrir no mapa</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
                     <dt class="col-sm-4">Website</dt>
                     <dd class="col-sm-8">
                         @if (!string.IsNullOrWhiteSpace(Model.Item.Website))

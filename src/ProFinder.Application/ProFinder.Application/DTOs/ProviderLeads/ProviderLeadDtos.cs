@@ -26,6 +26,10 @@ public class ProviderLeadListItemDto
 
     public string LocalityDisplay { get; set; } = string.Empty;
 
+    public decimal? Latitude { get; set; }
+
+    public decimal? Longitude { get; set; }
+
     public string? Website { get; set; }
 
     public string? ProfessionName { get; set; }
@@ -82,6 +86,10 @@ public class ProviderLeadDetailsDto
     public string? State { get; set; }
 
     public string LocalityDisplay { get; set; } = string.Empty;
+
+    public decimal? Latitude { get; set; }
+
+    public decimal? Longitude { get; set; }
 
     public string? Website { get; set; }
 

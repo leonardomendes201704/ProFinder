@@ -24,6 +24,7 @@ async def async_main() -> int:
         settings = CrawlerSettings.from_database(storage.load_settings())
         if runtime.headless is not None:
             settings.browser_headless = runtime.headless
+        storage.configure(settings)
 
         scheduler = CrawlScheduler(runtime=runtime, settings=settings, storage=storage, logger=logger)
         run_id, stats = await scheduler.run()

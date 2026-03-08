@@ -43,6 +43,8 @@ BEGIN
         Neighborhood NVARCHAR(120) NULL,
         City NVARCHAR(120) NULL,
         [State] NVARCHAR(10) NULL,
+        Latitude DECIMAL(9,6) NULL,
+        Longitude DECIMAL(9,6) NULL,
         Website NVARCHAR(250) NULL,
         SourceListingUrl NVARCHAR(500) NULL,
         SourceDetailsUrl NVARCHAR(500) NULL,
@@ -71,6 +73,18 @@ BEGIN
     CREATE INDEX IX_prf_provider_leads_ImportStatus ON dbo.prf_provider_leads(ImportStatus);
     CREATE INDEX IX_prf_provider_leads_LeadCaptureRunId ON dbo.prf_provider_leads(LeadCaptureRunId);
     CREATE INDEX IX_prf_provider_leads_LeadSourceId ON dbo.prf_provider_leads(LeadSourceId);
+END;
+GO
+
+IF COL_LENGTH('dbo.prf_provider_leads', 'Latitude') IS NULL
+BEGIN
+    ALTER TABLE dbo.prf_provider_leads ADD Latitude DECIMAL(9,6) NULL;
+END;
+GO
+
+IF COL_LENGTH('dbo.prf_provider_leads', 'Longitude') IS NULL
+BEGIN
+    ALTER TABLE dbo.prf_provider_leads ADD Longitude DECIMAL(9,6) NULL;
 END;
 GO
 
@@ -210,6 +224,11 @@ BEGIN
     ('crawler.browser_headless', 'Crawler', 'Executar navegadores em headless', 'Controla se Selenium e Playwright rodam em modo headless.', 'bool', 'true', 'true', 0, 1, 11, @createdAt, @createdAt),
     ('crawler.browser.chrome_arguments_json', 'Crawler', 'Argumentos extras do Chrome', 'JSON com argumentos extras usados ao iniciar o Chrome no Selenium. Em Linux container, mantenha --no-sandbox e --disable-dev-shm-usage.', 'json', '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--disable-software-rasterizer","--remote-debugging-pipe"]', '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--disable-software-rasterizer","--remote-debugging-pipe"]', 0, 1, 12, @createdAt, @createdAt),
     ('crawler.require_phone', 'Crawler', 'Exigir telefone para captacao', 'Quando ativo, descarta leads sem telefone ou WhatsApp antes da persistencia.', 'bool', 'true', 'true', 0, 1, 13, @createdAt, @createdAt),
+    ('crawler.geolocation_enabled', 'Crawler', 'Capturar geolocalizacao dos leads', 'Quando ativo, tenta persistir latitude e longitude dos leads captados.', 'bool', 'true', 'true', 0, 1, 14, @createdAt, @createdAt),
+    ('crawler.geolocation.nominatim_base_url', 'Crawler', 'Base URL do geocoder', 'URL base do servico Nominatim usado como fallback de geocodificacao.', 'string', 'https://nominatim.openstreetmap.org', 'https://nominatim.openstreetmap.org', 0, 1, 15, @createdAt, @createdAt),
+    ('crawler.geolocation.nominatim_user_agent', 'Crawler', 'User-Agent do geocoder', 'User-Agent enviado ao Nominatim nas consultas de geocodificacao.', 'string', 'ProFinderCrawler/1.0 (+https://profinder.consertapramim.com)', 'ProFinderCrawler/1.0 (+https://profinder.consertapramim.com)', 0, 1, 16, @createdAt, @createdAt),
+    ('crawler.geolocation.timeout_seconds', 'Crawler', 'Timeout da geocodificacao (segundos)', 'Timeout das consultas HTTP para resolver latitude e longitude.', 'int', '10', '10', 0, 1, 17, @createdAt, @createdAt),
+    ('crawler.geolocation.request_delay_ms', 'Crawler', 'Delay entre consultas de geocodificacao (ms)', 'Intervalo minimo entre chamadas ao servico de geocodificacao.', 'int', '1200', '1200', 0, 1, 18, @createdAt, @createdAt),
     ('crawler.google_maps.max_idle_scrolls', 'GoogleMaps', 'Scrolls ociosos maximos', 'Limite de scrolls sem novos cards no Google Maps.', 'int', '8', '8', 0, 1, 1, @createdAt, @createdAt),
     ('crawler.google_maps.scroll_pause_ms', 'GoogleMaps', 'Pausa do scroll (ms)', 'Pausa entre scrolls da lista do Google Maps.', 'int', '1500', '1500', 0, 1, 2, @createdAt, @createdAt);
 END;
@@ -232,6 +251,56 @@ BEGIN
     INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
     VALUES
     ('crawler.require_phone', 'Crawler', 'Exigir telefone para captacao', 'Quando ativo, descarta leads sem telefone ou WhatsApp antes da persistencia.', 'bool', 'true', 'true', 0, 1, 13, @createdAt, @createdAt);
+END;
+GO
+
+DECLARE @createdAt DATETIME2 = SYSUTCDATETIME();
+
+IF NOT EXISTS (SELECT 1 FROM dbo.prf_app_settings WHERE [Key] = 'crawler.geolocation_enabled')
+BEGIN
+    INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
+    VALUES
+    ('crawler.geolocation_enabled', 'Crawler', 'Capturar geolocalizacao dos leads', 'Quando ativo, tenta persistir latitude e longitude dos leads captados.', 'bool', 'true', 'true', 0, 1, 14, @createdAt, @createdAt);
+END;
+GO
+
+DECLARE @createdAt DATETIME2 = SYSUTCDATETIME();
+
+IF NOT EXISTS (SELECT 1 FROM dbo.prf_app_settings WHERE [Key] = 'crawler.geolocation.nominatim_base_url')
+BEGIN
+    INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
+    VALUES
+    ('crawler.geolocation.nominatim_base_url', 'Crawler', 'Base URL do geocoder', 'URL base do servico Nominatim usado como fallback de geocodificacao.', 'string', 'https://nominatim.openstreetmap.org', 'https://nominatim.openstreetmap.org', 0, 1, 15, @createdAt, @createdAt);
+END;
+GO
+
+DECLARE @createdAt DATETIME2 = SYSUTCDATETIME();
+
+IF NOT EXISTS (SELECT 1 FROM dbo.prf_app_settings WHERE [Key] = 'crawler.geolocation.nominatim_user_agent')
+BEGIN
+    INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
+    VALUES
+    ('crawler.geolocation.nominatim_user_agent', 'Crawler', 'User-Agent do geocoder', 'User-Agent enviado ao Nominatim nas consultas de geocodificacao.', 'string', 'ProFinderCrawler/1.0 (+https://profinder.consertapramim.com)', 'ProFinderCrawler/1.0 (+https://profinder.consertapramim.com)', 0, 1, 16, @createdAt, @createdAt);
+END;
+GO
+
+DECLARE @createdAt DATETIME2 = SYSUTCDATETIME();
+
+IF NOT EXISTS (SELECT 1 FROM dbo.prf_app_settings WHERE [Key] = 'crawler.geolocation.timeout_seconds')
+BEGIN
+    INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
+    VALUES
+    ('crawler.geolocation.timeout_seconds', 'Crawler', 'Timeout da geocodificacao (segundos)', 'Timeout das consultas HTTP para resolver latitude e longitude.', 'int', '10', '10', 0, 1, 17, @createdAt, @createdAt);
+END;
+GO
+
+DECLARE @createdAt DATETIME2 = SYSUTCDATETIME();
+
+IF NOT EXISTS (SELECT 1 FROM dbo.prf_app_settings WHERE [Key] = 'crawler.geolocation.request_delay_ms')
+BEGIN
+    INSERT INTO dbo.prf_app_settings ([Key], Category, DisplayName, [Description], DataType, [Value], DefaultValue, IsSensitive, IsEditable, DisplayOrder, CreatedAt, UpdatedAt)
+    VALUES
+    ('crawler.geolocation.request_delay_ms', 'Crawler', 'Delay entre consultas de geocodificacao (ms)', 'Intervalo minimo entre chamadas ao servico de geocodificacao.', 'int', '1200', '1200', 0, 1, 18, @createdAt, @createdAt);
 END;
 GO
 

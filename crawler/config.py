@@ -28,6 +28,11 @@ class CrawlerSettings:
     google_maps_max_idle_scrolls: int = 8
     google_maps_scroll_pause_ms: int = 1500
     browser_headless: bool = True
+    geolocation_enabled: bool = True
+    geolocation_nominatim_base_url: str = "https://nominatim.openstreetmap.org"
+    geolocation_nominatim_user_agent: str = "ProFinderCrawler/1.0 (+https://profinder.consertapramim.com)"
+    geolocation_timeout_seconds: int = 10
+    geolocation_request_delay_ms: int = 1200
     browser_chrome_arguments: list[str] = field(
         default_factory=lambda: [
             "--no-sandbox",
@@ -59,6 +64,16 @@ class CrawlerSettings:
                 instance.browser_fallback_enabled = _to_bool(value, instance.browser_fallback_enabled)
             elif key == "crawler.user_agent_rotation_enabled":
                 instance.user_agent_rotation_enabled = _to_bool(value, instance.user_agent_rotation_enabled)
+            elif key == "crawler.geolocation_enabled":
+                instance.geolocation_enabled = _to_bool(value, instance.geolocation_enabled)
+            elif key == "crawler.geolocation.nominatim_base_url":
+                instance.geolocation_nominatim_base_url = str(value).strip() or instance.geolocation_nominatim_base_url
+            elif key == "crawler.geolocation.nominatim_user_agent":
+                instance.geolocation_nominatim_user_agent = str(value).strip() or instance.geolocation_nominatim_user_agent
+            elif key == "crawler.geolocation.timeout_seconds":
+                instance.geolocation_timeout_seconds = _to_int(value, instance.geolocation_timeout_seconds)
+            elif key == "crawler.geolocation.request_delay_ms":
+                instance.geolocation_request_delay_ms = _to_int(value, instance.geolocation_request_delay_ms)
             elif key == "crawler.proxy_list_json":
                 instance.proxy_list = _to_json_list(value)
             elif key == "crawler.max_pages_per_target":

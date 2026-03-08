@@ -13,5 +13,6 @@ Arquivos desta pasta:
 - `07-multiplas-profissoes.md`
 - `08-leads-sem-telefone.md`
 - `09-localidade-real-do-lead.md`
+- `10-geolocalizacao-provider-leads.md`
 
 Objetivo: registrar cada etapa da implementacao do crawler multissite integrado ao ProFinder.

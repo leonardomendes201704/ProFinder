@@ -17,6 +17,8 @@ class Provider:
     neighborhood: str | None = None
     city: str | None = None
     state: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     website: str | None = None
     source_listing_url: str | None = None
     source_details_url: str | None = None
@@ -34,6 +36,8 @@ class Provider:
             "neighborhood": self.neighborhood,
             "city": self.city,
             "state": self.state,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
             "website": self.website,
             "source": self.source,
             "search_query": self.search_query,
