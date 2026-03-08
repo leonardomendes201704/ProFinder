@@ -14,6 +14,21 @@ def normalize_whitespace(value: str | None) -> str | None:
     return normalized or None
 
 
+def sanitize_extracted_text(value: str | None) -> str | None:
+    normalized = normalize_whitespace(value)
+    if not normalized:
+        return None
+
+    sanitized = "".join(
+        ch
+        for ch in normalized
+        if unicodedata.category(ch) not in {"Co", "Cc", "Cf", "Cs"}
+    )
+    sanitized = re.sub(r"^[^\w\(\+]+", "", sanitized, flags=re.UNICODE)
+    sanitized = re.sub(r"\s+", " ", sanitized).strip()
+    return sanitized or None
+
+
 def normalize_text_key(value: str | None) -> str:
     if not value:
         return ""

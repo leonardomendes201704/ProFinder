@@ -11,7 +11,7 @@ import pandas as pd
 import pyodbc
 
 from crawler.models.provider import Provider
-from crawler.utils.parser import build_deduplication_key, merge_json_array, truncate
+from crawler.utils.parser import build_deduplication_key, merge_json_array, sanitize_extracted_text, truncate
 from crawler.utils.phone_extractor import normalize_phone, pick_primary_phone
 
 
@@ -178,8 +178,11 @@ class MssqlStorage:
         profession_id: int | None,
         region_id: int | None,
     ) -> PersistResult:
+        sanitized_phone = sanitize_extracted_text(provider.phone)
+        sanitized_whatsapp = sanitize_extracted_text(provider.whatsapp)
+        sanitized_address = sanitize_extracted_text(provider.address)
         lead_source_id = self._resolve_source_id(provider.source)
-        normalized_phone = pick_primary_phone(provider.phone, provider.whatsapp)
+        normalized_phone = pick_primary_phone(sanitized_phone, sanitized_whatsapp)
         deduplication_key = build_deduplication_key(provider.name, normalized_phone, provider.city)
         now = self.utcnow()
         payload_json = json.dumps(provider.raw_payload, ensure_ascii=False)
@@ -259,10 +262,10 @@ class MssqlStorage:
                 provider.source,
                 truncate(provider.search_query, 250),
                 truncate(provider.name, 200),
-                truncate(_pick_best_contact(existing[4], provider.phone), 30),
-                truncate(_pick_best_contact(existing[5], provider.whatsapp), 30),
+                truncate(_pick_best_contact(existing[4], sanitized_phone), 30),
+                truncate(_pick_best_contact(existing[5], sanitized_whatsapp), 30),
                 normalized_phone,
-                truncate(_pick_best_text(existing[6], provider.address), 300),
+                truncate(_pick_best_text(existing[6], sanitized_address), 300),
                 truncate(_pick_best_text(existing[7], provider.neighborhood), 120),
                 truncate(_pick_best_text(existing[8], provider.city), 120),
                 truncate(_pick_best_text(existing[9], provider.state), 10),
@@ -335,10 +338,10 @@ class MssqlStorage:
             truncate(provider.search_query, 250),
             deduplication_key,
             truncate(provider.name, 200),
-            truncate(provider.phone, 30),
-            truncate(provider.whatsapp, 30),
+            truncate(sanitized_phone, 30),
+            truncate(sanitized_whatsapp, 30),
             normalized_phone,
-            truncate(provider.address, 300),
+            truncate(sanitized_address, 300),
             truncate(provider.neighborhood, 120),
             truncate(provider.city, 120),
             truncate(provider.state, 10),

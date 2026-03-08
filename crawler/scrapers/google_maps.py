@@ -23,7 +23,7 @@ from crawler.core.http_client import HttpClient
 from crawler.core.queue import CrawlTask
 from crawler.models.provider import Provider
 from crawler.scrapers.base import BaseScraper, ScrapeResult
-from crawler.utils.parser import build_search_query, normalize_whitespace
+from crawler.utils.parser import build_search_query, normalize_whitespace, sanitize_extracted_text
 from crawler.utils.phone_extractor import normalize_phone
 
 
@@ -220,14 +220,14 @@ class GoogleMapsScraper(BaseScraper):
         review_count = None
 
         try:
-            phone = normalize_whitespace(
+            phone = sanitize_extracted_text(
                 driver.find_element(By.XPATH, '//button[contains(@data-item-id,"phone")]').text
             )
         except Exception:
             pass
 
         try:
-            address = normalize_whitespace(
+            address = sanitize_extracted_text(
                 driver.find_element(By.XPATH, '//button[contains(@data-item-id,"address")]').text
             )
         except Exception:
