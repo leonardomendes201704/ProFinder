@@ -94,13 +94,14 @@
                 {
                     var badgeClass = item.Status switch
                     {
-                        "Completed" => "bg-success-subtle text-success-emphasis",
-                        "Failed" => "bg-danger-subtle text-danger-emphasis",
-                        "Running" => "bg-info-subtle text-info-emphasis",
-                        "Starting" => "bg-warning-subtle text-warning-emphasis",
-                        "Stopping" => "bg-warning-subtle text-warning-emphasis",
-                        "Stopped" => "bg-secondary-subtle text-secondary-emphasis",
-                        _ => "bg-secondary-subtle text-secondary-emphasis"
+                        "Completed" => "crawler-run-status-badge crawler-run-status-completed",
+                        "Failed" => "crawler-run-status-badge crawler-run-status-failed",
+                        "Running" => "crawler-run-status-badge crawler-run-status-running",
+                        "Starting" => "crawler-run-status-badge crawler-run-status-starting",
+                        "Queued" => "crawler-run-status-badge crawler-run-status-queued",
+                        "Stopping" => "crawler-run-status-badge crawler-run-status-stopping",
+                        "Stopped" => "crawler-run-status-badge crawler-run-status-stopped",
+                        _ => "crawler-run-status-badge crawler-run-status-default"
                     };
 
                     <tr>
@@ -112,7 +113,7 @@
                                 <div class="small text-muted">@item.Notes</div>
                             }
                         </td>
-                        <td><span class="badge @badgeClass">@item.Status</span></td>
+                        <td><span class="@badgeClass">@item.Status</span></td>
                         <td>@(item.CreatedBy ?? "-")</td>
                         <td>
                             <div>Capturados: @item.ItemsCaptured</div>

@@ -82,6 +82,58 @@ body {
   color: var(--pf-primary);
 }
 
+.crawler-run-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 7.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.crawler-run-status-completed {
+  background-color: #dcfce7;
+  border-color: #86efac;
+  color: #166534 !important;
+}
+
+.crawler-run-status-failed {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b !important;
+}
+
+.crawler-run-status-running {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8 !important;
+}
+
+.crawler-run-status-starting,
+.crawler-run-status-queued {
+  background-color: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e !important;
+}
+
+.crawler-run-status-stopping {
+  background-color: #ffedd5;
+  border-color: #fdba74;
+  color: #9a3412 !important;
+}
+
+.crawler-run-status-stopped,
+.crawler-run-status-default {
+  background-color: #e5e7eb;
+  border-color: #cbd5e1;
+  color: #334155 !important;
+}
+
 .filter-card .form-label {
   font-size: 0.9rem;
 }
