@@ -60,7 +60,7 @@ dotnet run --project src\ProFinder.Web\ProFinder.Web\ProFinder.Web.csproj
 Crawler:
 
 ```powershell
-$env:PROFINDER_SQLSERVER_CONNECTION_STRING='Driver={ODBC Driver 17 for SQL Server};Server=SEU_SQL_HOST,1433;Database=ConsertaPraMimDb;Uid=sa;Pwd={SUA_SENHA};Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30;'
+$env:PROFINDER_SQLSERVER_CONNECTION_STRING='Driver={ODBC Driver 18 for SQL Server};Server=SEU_SQL_HOST,1433;Database=ConsertaPraMimDb;Uid=sa;Pwd={SUA_SENHA};Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30;'
 python crawler/main.py --city "praia grande sp" --service "eletricista"
 ```
 
@@ -79,7 +79,7 @@ Copie `.env.example` para `.env` e preencha os valores:
 WEB_PORT=8080
 API_PORT=8081
 ConnectionStrings__DefaultConnection=Server=SEU_SQL_HOST,1433;Database=ConsertaPraMimDb;User Id=sa;Password=SUA_SENHA;TrustServerCertificate=True;Encrypt=True;MultipleActiveResultSets=True;Connection Timeout=30;
-PROFINDER_SQLSERVER_CONNECTION_STRING=Driver={ODBC Driver 17 for SQL Server};Server=SEU_SQL_HOST,1433;Database=ConsertaPraMimDb;Uid=sa;Pwd={SUA_SENHA};Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30;
+PROFINDER_SQLSERVER_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=SEU_SQL_HOST,1433;Database=ConsertaPraMimDb;Uid=sa;Pwd={SUA_SENHA};Encrypt=yes;TrustServerCertificate=yes;Connection Timeout=30;
 ExternalServices__IbgeBaseUrl=https://servicodados.ibge.gov.br
 ExternalServices__ViaCepBaseUrl=https://viacep.com.br
 ExternalServices__NominatimBaseUrl=https://nominatim.openstreetmap.org

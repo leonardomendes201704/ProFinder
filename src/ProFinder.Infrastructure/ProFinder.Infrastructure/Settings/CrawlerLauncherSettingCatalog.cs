@@ -64,7 +64,7 @@ public static class CrawlerLauncherSettingCatalog
             "Driver ODBC do SQL Server",
             "Driver usado para converter a connection string da aplicacao em connection string ODBC para o Python.",
             "string",
-            "ODBC Driver 17 for SQL Server",
+            "ODBC Driver 18 for SQL Server",
             false,
             5),
         new(
