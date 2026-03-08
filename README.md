@@ -105,6 +105,7 @@ Arquivos:
 - `deploy/bootstrap-vps.sh`
 - `deploy/deploy.sh`
 - `.github/workflows/deploy.yml`
+- `deploy/nginx/profinder.consertapramim.com.conf.example`
 
 Passo inicial na VPS:
 
@@ -132,6 +133,29 @@ Depois disso, todo push na branch `main` roda:
 - `python -m compileall crawler`
 - deploy remoto via SSH
 - `docker compose up -d --build`
+
+## Estado atual da VPS
+
+Ambiente configurado:
+
+- VPS: `187.77.48.150`
+- diretorio: `/opt/profinder`
+- branch de deploy: `main`
+- porta interna da Web no host: `127.0.0.1:5200`
+- porta interna da API no host: `127.0.0.1:5201`
+
+O Nginx da VPS pode usar o template em `deploy/nginx/profinder.consertapramim.com.conf.example`.
+
+Observacao importante:
+
+- `profinder.consertapramim.com` ainda nao resolve no DNS
+- enquanto o DNS nao apontar para a VPS, o HTTPS com Certbot nao pode ser emitido
+
+Quando o DNS estiver apontando para `187.77.48.150`, o passo esperado na VPS e:
+
+```bash
+certbot --nginx -d profinder.consertapramim.com
+```
 
 ## Observacoes de deploy
 
