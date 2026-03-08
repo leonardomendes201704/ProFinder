@@ -1,0 +1,54 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.Settings.EditModel
+@{
+    ViewData["Title"] = "Editar configuracao";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Editar configuracao</h1>
+        <p>Ajuste o parametro e salve para que as proximas execucoes do crawler usem o novo valor.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="/Settings/Index">Voltar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Chave</dt>
+            <dd class="col-sm-9"><code>@Model.Setting.Key</code></dd>
+            <dt class="col-sm-3">Categoria</dt>
+            <dd class="col-sm-9">@Model.Setting.Category</dd>
+            <dt class="col-sm-3">Tipo</dt>
+            <dd class="col-sm-9">@Model.Setting.DataType</dd>
+            <dt class="col-sm-3">Padrao</dt>
+            <dd class="col-sm-9"><code>@Model.Setting.DefaultValue</code></dd>
+        </dl>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Setting.Description))
+        {
+            <div class="alert alert-secondary">@Model.Setting.Description</div>
+        }
+
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="Input.Value" class="form-label">Valor</label>
+                @if (Model.UseTextArea)
+                {
+                    <textarea asp-for="Input.Value" class="form-control" rows="8"></textarea>
+                }
+                else
+                {
+                    <input asp-for="Input.Value" type="@Model.InputType" class="form-control" />
+                }
+                <span asp-validation-for="Input.Value" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar alteracoes</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

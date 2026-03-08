@@ -1,0 +1,90 @@
+@page
+@model ProFinder.Web.Pages.ProviderLeads.IndexModel
+@using ProFinder.Web.Realtime
+@{
+    ViewData["Title"] = "Crawler Leads";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Leads capturados</h1>
+        <p>Base consolidada e deduplicada dos leads coletados em Google Maps, OLX, Telelistas, GuiaMais e outras fontes.</p>
+    </div>
+    <div class="text-end">
+        <div class="small text-muted">Atualizacao automatica</div>
+        <div id="provider-leads-connection-status" class="small fw-semibold">Conectando...</div>
+    </div>
+</div>
+
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label asp-for="SearchTerm" class="form-label">Busca</label>
+                <input asp-for="SearchTerm" class="form-control" placeholder="Nome, telefone ou endereco" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="LeadSourceId" class="form-label">Origem</label>
+                <select asp-for="LeadSourceId" asp-items="Model.SourceOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="ProfessionId" class="form-label">Profissao</label>
+                <select asp-for="ProfessionId" asp-items="Model.ProfessionOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="RegionId" class="form-label">Regiao</label>
+                <select asp-for="RegionId" asp-items="Model.RegionOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label asp-for="LeadCaptureRunId" class="form-label">Lote</label>
+                <input asp-for="LeadCaptureRunId" class="form-control" placeholder="ID" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="ImportStatus" class="form-label">Status</label>
+                <select asp-for="ImportStatus" asp-items="Model.ImportStatusOptions" class="form-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="SiteKey" class="form-label">Site key</label>
+                <input asp-for="SiteKey" class="form-control" placeholder="google_maps, olx..." />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="City" class="form-label">Cidade</label>
+                <input asp-for="City" class="form-control" />
+            </div>
+            <div class="col-md-1">
+                <label asp-for="PageSize" class="form-label">Itens</label>
+                <select asp-for="PageSize" class="form-select">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div class="col-12 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                    <a class="btn btn-outline-secondary" asp-page="/ProviderLeads/Index">Limpar</a>
+                </div>
+                <div id="provider-leads-live-status" class="small text-muted"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="provider-leads-results"
+     data-results-url="@Url.Page("/ProviderLeads/Index", pageHandler: "Results")"
+     data-hub-url="@CrawlerRunSignalRNotifier.HubRoute">
+    @await Html.PartialAsync("_Results", Model)
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/provider-leads-live.js" asp-append-version="true"></script>
+}

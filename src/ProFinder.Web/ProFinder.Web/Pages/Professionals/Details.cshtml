@@ -1,0 +1,219 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.Professionals.DetailsModel
+@{
+    ViewData["Title"] = "Detalhes do profissional";
+}
+
+<div class="page-header">
+    <div>
+        <h1>@Model.Professional.FullName</h1>
+        <p>@Model.Professional.ProfessionName • @Model.Professional.StatusName</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-page="/Professionals/Edit" asp-route-id="@Model.Professional.Id">Editar</a>
+        <a class="btn btn-outline-secondary" asp-page="/Professionals/Index">Voltar</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Dados principais</h2>
+            </div>
+            <div class="card-body">
+                <dl class="info-list">
+                    <dt>Nome comercial</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Professional.BusinessName) ? "-" : Model.Professional.BusinessName)</dd>
+                    <dt>Telefone</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Professional.Phone) ? "-" : Model.Professional.Phone)</dd>
+                    <dt>WhatsApp</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Professional.WhatsApp) ? "-" : Model.Professional.WhatsApp)</dd>
+                    <dt>E-mail</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Professional.Email) ? "-" : Model.Professional.Email)</dd>
+                    <dt>Origem</dt>
+                    <dd>@Model.Professional.SourceName</dd>
+                    <dt>Website</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Professional.Website) ? "-" : Model.Professional.Website)</dd>
+                    <dt>Instagram</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Professional.Instagram) ? "-" : Model.Professional.Instagram)</dd>
+                    <dt>Autônomo</dt>
+                    <dd>@(Model.Professional.IsAutonomous ? "Sim" : "Não")</dd>
+                    <dt>Ativo</dt>
+                    <dd>@(Model.Professional.IsActive ? "Sim" : "Não")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Regiões de atuação</h2>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Professional.Regions.Count == 0)
+                {
+                    <div class="list-empty">Nenhuma região vinculada.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Região</th>
+                                    <th>Confiança</th>
+                                    <th>Principal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var region in Model.Professional.Regions)
+                                {
+                                    <tr>
+                                        <td>@region.RegionDisplayName</td>
+                                        <td>@region.ConfidenceLevel</td>
+                                        <td>@(region.IsPrimaryRegion ? "Sim" : "Não")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Observações</h2>
+            </div>
+            <div class="card-body">
+                @(string.IsNullOrWhiteSpace(Model.Professional.Notes) ? "Nenhuma observação registrada." : Model.Professional.Notes)
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Registrar interação</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddInteraction">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="NewInteraction.InteractionType" class="form-label"></label>
+                            <select asp-for="NewInteraction.InteractionType" asp-items="Model.InteractionTypeOptions" class="form-select"></select>
+                            <span asp-validation-for="NewInteraction.InteractionType" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="NewInteraction.InteractionDate" class="form-label"></label>
+                            <input asp-for="NewInteraction.InteractionDate" class="form-control" type="datetime-local" value="@Model.NewInteraction.InteractionDate.ToString("yyyy-MM-ddTHH:mm")" />
+                            <span asp-validation-for="NewInteraction.InteractionDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="NewInteraction.CreatedBy" class="form-label"></label>
+                            <input asp-for="NewInteraction.CreatedBy" class="form-control" />
+                            <span asp-validation-for="NewInteraction.CreatedBy" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="NewInteraction.Description" class="form-label"></label>
+                            <textarea asp-for="NewInteraction.Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="NewInteraction.Description" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Salvar interação</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Histórico de interações</h2>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Professional.Interactions.Count == 0)
+                {
+                    <div class="list-empty">Nenhuma interação registrada.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                    <th>Criado por</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var interaction in Model.Professional.Interactions)
+                                {
+                                    <tr>
+                                        <td>@interaction.InteractionDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@interaction.InteractionTypeLabel</td>
+                                        <td>@interaction.Description</td>
+                                        <td>@interaction.CreatedBy</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Evidências e origem dos dados</h2>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Professional.Evidences.Count == 0)
+                {
+                    <div class="list-empty">Nenhuma evidência registrada.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Campo</th>
+                                    <th>Valor</th>
+                                    <th>Coletado em</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var evidence in Model.Professional.Evidences)
+                                {
+                                    <tr>
+                                        <td>@evidence.FieldName</td>
+                                        <td>
+                                            @evidence.FieldValue
+                                            @if (!string.IsNullOrWhiteSpace(evidence.SourceUrl))
+                                            {
+                                                <div class="small mt-1">
+                                                    <a href="@evidence.SourceUrl" target="_blank" rel="noreferrer">Fonte</a>
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>@evidence.CollectedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

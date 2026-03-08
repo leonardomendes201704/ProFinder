@@ -1,0 +1,29 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.Professionals.EditModel
+@{
+    ViewData["Title"] = "Editar profissional";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Editar profissional</h1>
+        <p>Atualize os dados principais, origem, status e regiões de atuação.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="/Professionals/Details" asp-route-id="@Model.Id">Detalhes</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            @await Html.PartialAsync("_ProfessionalForm", Model)
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                <a class="btn btn-outline-secondary" asp-page="/Professionals/Index">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

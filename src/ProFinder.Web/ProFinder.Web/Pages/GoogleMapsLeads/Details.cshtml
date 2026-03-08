@@ -1,0 +1,106 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.GoogleMapsLeads.DetailsModel
+@{
+    ViewData["Title"] = "Detalhes do lead do Google Maps";
+}
+
+<div class="page-header">
+    <div>
+        <h1>@Model.Lead.Name</h1>
+        <p>@Model.Lead.SourceName • Lote #@Model.Lead.LeadCaptureRunId</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-page="/GoogleMapsLeads/Index">Voltar</a>
+        @if (!string.IsNullOrWhiteSpace(Model.Lead.PlaceUrl))
+        {
+            <a class="btn btn-outline-primary" href="@Model.Lead.PlaceUrl" target="_blank" rel="noreferrer">Abrir no Google Maps</a>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Dados capturados</h2>
+            </div>
+            <div class="card-body">
+                <dl class="info-list">
+                    <dt>Telefone</dt>
+                    <dd>@(Model.Lead.Phone ?? "-")</dd>
+                    <dt>Telefone normalizado</dt>
+                    <dd>@(Model.Lead.NormalizedPhone ?? "-")</dd>
+                    <dt>Endereço</dt>
+                    <dd>@(Model.Lead.Address ?? "-")</dd>
+                    <dt>Website</dt>
+                    <dd>
+                        @if (string.IsNullOrWhiteSpace(Model.Lead.Website))
+                        {
+                            @:-
+                        }
+                        else
+                        {
+                            <a href="@Model.Lead.Website" target="_blank" rel="noreferrer">@Model.Lead.Website</a>
+                        }
+                    </dd>
+                    <dt>Nota</dt>
+                    <dd>@(Model.Lead.Rating?.ToString("0.0") ?? "-")</dd>
+                    <dt>Avaliações</dt>
+                    <dd>@(Model.Lead.ReviewCount?.ToString() ?? "-")</dd>
+                    <dt>Status</dt>
+                    <dd>@Model.Lead.ImportStatus</dd>
+                    <dt>Coletado em</dt>
+                    <dd>@Model.Lead.ScrapedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Contexto do lote</h2>
+            </div>
+            <div class="card-body">
+                <dl class="info-list mb-0">
+                    <dt>Consulta</dt>
+                    <dd>@Model.Lead.SearchQuery</dd>
+                    <dt>Profissão alvo</dt>
+                    <dd>@(Model.Lead.ProfessionName ?? "-")</dd>
+                    <dt>Região alvo</dt>
+                    <dd>@(Model.Lead.RegionDisplayName ?? "-")</dd>
+                    <dt>Profissional importado</dt>
+                    <dd>
+                        @if (Model.Lead.ImportedProfessionalId.HasValue)
+                        {
+                            <a asp-page="/Professionals/Details" asp-route-id="@Model.Lead.ImportedProfessionalId.Value">@Model.Lead.ImportedProfessionalName</a>
+                        }
+                        else
+                        {
+                            @:-
+                        }
+                    </dd>
+                    <dt>Criado em</dt>
+                    <dd>@Model.Lead.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt>Atualizado em</dt>
+                    <dd>@Model.Lead.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Payload bruto</h2>
+            </div>
+            <div class="card-body">
+                @if (string.IsNullOrWhiteSpace(Model.Lead.RawPayloadJson))
+                {
+                    <div class="text-muted">Nenhum payload bruto armazenado.</div>
+                }
+                else
+                {
+                    <pre class="mb-0 small">@Model.Lead.RawPayloadJson</pre>
+                }
+            </div>
+        </div>
+    </div>
+</div>

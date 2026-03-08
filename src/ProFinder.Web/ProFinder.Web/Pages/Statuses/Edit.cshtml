@@ -1,0 +1,45 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.Statuses.EditModel
+@{
+    ViewData["Title"] = "Editar status";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Editar status</h1>
+        <p>Ajuste nome, descrição, ordem de exibição e disponibilidade.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="/Statuses/Index">Voltar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="Input.Name" class="form-label"></label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Description" class="form-label"></label>
+                <textarea asp-for="Input.Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Input.Description" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.DisplayOrder" class="form-label"></label>
+                <input asp-for="Input.DisplayOrder" class="form-control" />
+                <span asp-validation-for="Input.DisplayOrder" class="text-danger"></span>
+            </div>
+            <div class="form-check mb-4">
+                <input asp-for="Input.IsActive" class="form-check-input" />
+                <label asp-for="Input.IsActive" class="form-check-label"></label>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

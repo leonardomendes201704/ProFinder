@@ -1,0 +1,175 @@
+@page
+@model ProFinder.Web.Pages.Professionals.IndexModel
+@{
+    ViewData["Title"] = "Profissionais";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Profissionais</h1>
+        <p>Busque, filtre e acompanhe os leads profissionais por região e status.</p>
+    </div>
+    <a class="btn btn-primary" asp-page="/Professionals/Create">Cadastrar profissional</a>
+</div>
+
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="SearchTerm" class="form-label">Busca</label>
+                <input asp-for="SearchTerm" class="form-control" placeholder="Nome, telefone, WhatsApp ou e-mail" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="ProfessionId" class="form-label">Profissão</label>
+                <select asp-for="ProfessionId" asp-items="Model.ProfessionOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="StatusId" class="form-label">Status</label>
+                <select asp-for="StatusId" asp-items="Model.StatusOptions" class="form-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="SourceId" class="form-label">Origem</label>
+                <select asp-for="SourceId" asp-items="Model.SourceOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="City" class="form-label">Cidade</label>
+                <select asp-for="City" asp-items="Model.CityOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Neighborhood" class="form-label">Bairro</label>
+                <select asp-for="Neighborhood" asp-items="Model.NeighborhoodOptions" class="form-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="PageSize" class="form-label">Itens por página</label>
+                <select asp-for="PageSize" class="form-select">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                <a class="btn btn-outline-secondary" asp-page="/Professionals/Index">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Resultados</h2>
+        <span class="text-muted small">@Model.Result.TotalCount profissional(is)</span>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Result.Items.Count == 0)
+        {
+            <div class="list-empty">Nenhum profissional encontrado para os filtros informados.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Profissional</th>
+                            <th>Contato</th>
+                            <th>Profissão</th>
+                            <th>Status</th>
+                            <th>Origem</th>
+                            <th>Região principal</th>
+                            <th>Cadastrado em</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Result.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.FullName</div>
+                                    <div class="text-muted small">@item.BusinessName</div>
+                                </td>
+                                <td>
+                                    <div>@item.Phone</div>
+                                    <div class="text-muted small">@item.Email</div>
+                                </td>
+                                <td>@item.ProfessionName</td>
+                                <td>@item.StatusName</td>
+                                <td>@item.SourceName</td>
+                                <td>@item.PrimaryRegionDisplay</td>
+                                <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a class="btn btn-sm btn-outline-secondary" asp-page="/Professionals/Details" asp-route-id="@item.Id">Detalhes</a>
+                                        <a class="btn btn-sm btn-outline-primary" asp-page="/Professionals/Edit" asp-route-id="@item.Id">Editar</a>
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" onsubmit="return confirm('Deseja desativar este profissional?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Desativar</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+    @if (Model.Result.TotalPages > 1)
+    {
+        <div class="card-footer bg-white">
+            <nav aria-label="Paginação de profissionais">
+                <ul class="pagination mb-0">
+                    <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-page="/Professionals/Index"
+                           asp-route-SearchTerm="@Model.SearchTerm"
+                           asp-route-ProfessionId="@Model.ProfessionId"
+                           asp-route-StatusId="@Model.StatusId"
+                           asp-route-SourceId="@Model.SourceId"
+                           asp-route-City="@Model.City"
+                           asp-route-Neighborhood="@Model.Neighborhood"
+                           asp-route-PageSize="@Model.PageSize"
+                           asp-route-PageNumber="@(Model.PageNumber - 1)">Anterior</a>
+                    </li>
+                    @for (var pageIndex = 1; pageIndex <= Model.Result.TotalPages; pageIndex++)
+                    {
+                        <li class="page-item @(pageIndex == Model.PageNumber ? "active" : null)">
+                            <a class="page-link"
+                               asp-page="/Professionals/Index"
+                               asp-route-SearchTerm="@Model.SearchTerm"
+                               asp-route-ProfessionId="@Model.ProfessionId"
+                               asp-route-StatusId="@Model.StatusId"
+                               asp-route-SourceId="@Model.SourceId"
+                               asp-route-City="@Model.City"
+                               asp-route-Neighborhood="@Model.Neighborhood"
+                               asp-route-PageSize="@Model.PageSize"
+                               asp-route-PageNumber="@pageIndex">@pageIndex</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.PageNumber >= Model.Result.TotalPages ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-page="/Professionals/Index"
+                           asp-route-SearchTerm="@Model.SearchTerm"
+                           asp-route-ProfessionId="@Model.ProfessionId"
+                           asp-route-StatusId="@Model.StatusId"
+                           asp-route-SourceId="@Model.SourceId"
+                           asp-route-City="@Model.City"
+                           asp-route-Neighborhood="@Model.Neighborhood"
+                           asp-route-PageSize="@Model.PageSize"
+                           asp-route-PageNumber="@(Model.PageNumber + 1)">Próxima</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

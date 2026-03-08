@@ -1,0 +1,101 @@
+@model ProFinder.Web.Pages.GoogleMapsLeads.IndexModel
+
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Resultados</h2>
+        <span class="text-muted small">@Model.Result.TotalCount lead(s)</span>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Result.Items.Count == 0)
+        {
+            <div class="list-empty">Nenhum lead do Google Maps encontrado.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Lead</th>
+                            <th>Contato</th>
+                            <th>Consulta</th>
+                            <th>Profissão</th>
+                            <th>Região</th>
+                            <th>Status</th>
+                            <th>Coletado em</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Result.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.Name</div>
+                                    <div class="text-muted small">@item.Address</div>
+                                </td>
+                                <td>
+                                    <div>@(string.IsNullOrWhiteSpace(item.Phone) ? "-" : item.Phone)</div>
+                                    <div class="text-muted small">Nota: @(item.Rating?.ToString("0.0") ?? "-") • Avaliações: @(item.ReviewCount?.ToString() ?? "-")</div>
+                                </td>
+                                <td>@item.SearchQuery</td>
+                                <td>@(item.ProfessionName ?? "-")</td>
+                                <td>@(item.RegionDisplayName ?? "-")</td>
+                                <td>@item.ImportStatus</td>
+                                <td>@item.ScrapedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-page="/GoogleMapsLeads/Details" asp-route-id="@item.Id">Detalhes</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+    @if (Model.Result.TotalPages > 1)
+    {
+        <div class="card-footer bg-white">
+            <nav aria-label="Paginação de leads do Google Maps">
+                <ul class="pagination mb-0">
+                    <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-page="/GoogleMapsLeads/Index"
+                           asp-route-SearchTerm="@Model.SearchTerm"
+                           asp-route-ProfessionId="@Model.ProfessionId"
+                           asp-route-RegionId="@Model.RegionId"
+                           asp-route-LeadCaptureRunId="@Model.LeadCaptureRunId"
+                           asp-route-ImportStatus="@Model.ImportStatus"
+                           asp-route-PageSize="@Model.PageSize"
+                           asp-route-PageNumber="@(Model.PageNumber - 1)">Anterior</a>
+                    </li>
+                    @for (var pageIndex = 1; pageIndex <= Model.Result.TotalPages; pageIndex++)
+                    {
+                        <li class="page-item @(pageIndex == Model.PageNumber ? "active" : null)">
+                            <a class="page-link"
+                               asp-page="/GoogleMapsLeads/Index"
+                               asp-route-SearchTerm="@Model.SearchTerm"
+                               asp-route-ProfessionId="@Model.ProfessionId"
+                               asp-route-RegionId="@Model.RegionId"
+                               asp-route-LeadCaptureRunId="@Model.LeadCaptureRunId"
+                               asp-route-ImportStatus="@Model.ImportStatus"
+                               asp-route-PageSize="@Model.PageSize"
+                               asp-route-PageNumber="@pageIndex">@pageIndex</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.PageNumber >= Model.Result.TotalPages ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-page="/GoogleMapsLeads/Index"
+                           asp-route-SearchTerm="@Model.SearchTerm"
+                           asp-route-ProfessionId="@Model.ProfessionId"
+                           asp-route-RegionId="@Model.RegionId"
+                           asp-route-LeadCaptureRunId="@Model.LeadCaptureRunId"
+                           asp-route-ImportStatus="@Model.ImportStatus"
+                           asp-route-PageSize="@Model.PageSize"
+                           asp-route-PageNumber="@(Model.PageNumber + 1)">Próxima</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

@@ -1,0 +1,27 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.Regions.EditModel
+@{
+    ViewData["Title"] = "Editar região";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Editar região</h1>
+        <p>Ajuste os dados geográficos e de identificação da região.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="/Regions/Index">Voltar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            @await Html.PartialAsync("_RegionForm", Model)
+            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/region-form.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,46 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: src/ProFinder.Web/ProFinder.Web/Dockerfile
+    container_name: profinder-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      PROFINDER_SQLSERVER_CONNECTION_STRING: ${PROFINDER_SQLSERVER_CONNECTION_STRING}
+      ExternalServices__IbgeBaseUrl: ${ExternalServices__IbgeBaseUrl}
+      ExternalServices__ViaCepBaseUrl: ${ExternalServices__ViaCepBaseUrl}
+      ExternalServices__NominatimBaseUrl: ${ExternalServices__NominatimBaseUrl}
+      ExternalServices__NominatimUserAgent: ${ExternalServices__NominatimUserAgent}
+      RealtimeNotifications__GoogleMapsLeadsWebhookKey: ${RealtimeNotifications__GoogleMapsLeadsWebhookKey}
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    volumes:
+      - crawler_exports:/app/crawler/exports
+
+  api:
+    build:
+      context: .
+      dockerfile: src/ProFinder.Api/ProFinder.Api/Dockerfile
+    container_name: profinder-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      ExternalServices__IbgeBaseUrl: ${ExternalServices__IbgeBaseUrl}
+      ExternalServices__ViaCepBaseUrl: ${ExternalServices__ViaCepBaseUrl}
+      ExternalServices__NominatimBaseUrl: ${ExternalServices__NominatimBaseUrl}
+      ExternalServices__NominatimUserAgent: ${ExternalServices__NominatimUserAgent}
+      RealtimeNotifications__GoogleMapsLeadsWebhookKey: ${RealtimeNotifications__GoogleMapsLeadsWebhookKey}
+    ports:
+      - "${API_PORT:-8081}:8080"
+
+volumes:
+  crawler_exports:

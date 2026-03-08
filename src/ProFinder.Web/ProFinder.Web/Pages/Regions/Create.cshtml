@@ -1,0 +1,27 @@
+@page
+@model ProFinder.Web.Pages.Regions.CreateModel
+@{
+    ViewData["Title"] = "Nova região";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Nova região</h1>
+        <p>Cadastre uma região de atuação para segmentar os profissionais.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="/Regions/Index">Voltar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            @await Html.PartialAsync("_RegionForm", Model)
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/region-form.js" asp-append-version="true"></script>
+}

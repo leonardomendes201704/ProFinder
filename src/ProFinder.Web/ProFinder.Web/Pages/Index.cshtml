@@ -1,0 +1,178 @@
+@page
+@model ProFinder.Web.Pages.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p>Visão geral da operação de captação e gestão de profissionais.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-page="/Professionals/Create">Novo profissional</a>
+        <a class="btn btn-outline-primary" asp-page="/Interactions/Index">Registrar interação</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <span class="text-muted text-uppercase small">Profissionais ativos</span>
+                <h2 class="display-6 mt-3">@Model.Summary.TotalProfessionals</h2>
+                <p class="text-muted mb-0">Base atual monitorada no painel.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <span class="text-muted text-uppercase small">Profissões mapeadas</span>
+                <h2 class="display-6 mt-3">@Model.Summary.ProfessionalsByProfession.Count</h2>
+                <p class="text-muted mb-0">Categorias com leads vinculados.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <span class="text-muted text-uppercase small">Status em uso</span>
+                <h2 class="display-6 mt-3">@Model.Summary.ProfessionalsByStatus.Count</h2>
+                <p class="text-muted mb-0">Etapas do funil atualmente ocupadas.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <span class="text-muted text-uppercase small">Cidades cobertas</span>
+                <h2 class="display-6 mt-3">@Model.Summary.ProfessionalsByCity.Count</h2>
+                <p class="text-muted mb-0">Regiões com profissionais cadastrados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Por profissão</h2>
+            </div>
+            <div class="card-body">
+                @if (Model.Summary.ProfessionalsByProfession.Count == 0)
+                {
+                    <div class="list-empty">Nenhum dado disponível.</div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.Summary.ProfessionalsByProfession)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>@item.Label</span>
+                                <span class="badge badge-soft rounded-pill">@item.Total</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Por status</h2>
+            </div>
+            <div class="card-body">
+                @if (Model.Summary.ProfessionalsByStatus.Count == 0)
+                {
+                    <div class="list-empty">Nenhum dado disponível.</div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.Summary.ProfessionalsByStatus)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>@item.Label</span>
+                                <span class="badge bg-secondary rounded-pill">@item.Total</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Por cidade</h2>
+            </div>
+            <div class="card-body">
+                @if (Model.Summary.ProfessionalsByCity.Count == 0)
+                {
+                    <div class="list-empty">Nenhum dado disponível.</div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.Summary.ProfessionalsByCity)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>@item.Label</span>
+                                <span class="badge bg-info-subtle text-info-emphasis rounded-pill">@item.Total</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Profissionais recentes</h2>
+        <a class="btn btn-sm btn-outline-primary" asp-page="/Professionals/Index">Ver todos</a>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Summary.RecentProfessionals.Count == 0)
+        {
+            <div class="list-empty">Nenhum profissional cadastrado.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Profissional</th>
+                            <th>Profissão</th>
+                            <th>Status</th>
+                            <th>Cidade</th>
+                            <th>Cadastrado em</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Summary.RecentProfessionals)
+                        {
+                            <tr>
+                                <td>@item.FullName</td>
+                                <td>@item.ProfessionName</td>
+                                <td>@item.StatusName</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.City) ? "-" : item.City)</td>
+                                <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-page="/Professionals/Details" asp-route-id="@item.Id">Detalhes</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

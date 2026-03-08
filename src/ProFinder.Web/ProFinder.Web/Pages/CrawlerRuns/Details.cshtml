@@ -1,0 +1,179 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.CrawlerRuns.DetailsModel
+@using ProFinder.Web.Realtime
+@{
+    ViewData["Title"] = $"Lote #{Model.Run.Id}";
+}
+
+<div class="page-header d-flex justify-content-between align-items-start gap-3">
+    <div>
+        <h1>Lote #@Model.Run.Id</h1>
+        <p>@Model.Run.SearchQuery</p>
+        <div class="small text-muted">Atualizacao em tempo real</div>
+        <div id="crawler-run-connection-status" class="small fw-semibold">Conectando...</div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.CanStop)
+        {
+            <form method="post" asp-page-handler="Stop" asp-route-id="@Model.Run.Id" id="crawler-run-stop-form">
+                <button type="submit" class="btn btn-outline-danger" id="crawler-run-stop-button">Parar crawler</button>
+            </form>
+        }
+        <a class="btn btn-outline-secondary" asp-page="/CrawlerRuns/Index">Voltar</a>
+        <a class="btn btn-primary" asp-page="/ProviderLeads/Index" asp-route-LeadCaptureRunId="@Model.Run.Id">Ver leads</a>
+    </div>
+</div>
+
+<div id="crawler-run-live"
+     data-run-id="@Model.Run.Id"
+     data-hub-url="@CrawlerRunSignalRNotifier.HubRoute">
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Status</div>
+                            <div class="fs-5 fw-semibold" id="crawler-run-status">@Model.Run.Status</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Leads capturados</div>
+                            <div class="fs-5 fw-semibold" id="crawler-run-items-captured">@Model.Run.ItemsCaptured</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Leads no banco</div>
+                            <div class="fs-5 fw-semibold" id="crawler-run-provider-count">@Model.Run.ProviderLeadCount</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Resumo da execucao</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Tipo</dt>
+                    <dd class="col-sm-8">@Model.Run.CaptureType</dd>
+
+                    <dt class="col-sm-4">Solicitado por</dt>
+                    <dd class="col-sm-8">@(Model.Run.CreatedBy ?? "-")</dd>
+
+                    <dt class="col-sm-4">Inicio</dt>
+                    <dd class="col-sm-8" id="crawler-run-started-at">@Model.Run.StartedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</dd>
+
+                    <dt class="col-sm-4">Fim</dt>
+                    <dd class="col-sm-8" id="crawler-run-completed-at">@(Model.Run.CompletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") ?? "-")</dd>
+
+                    <dt class="col-sm-4">Inseridos</dt>
+                    <dd class="col-sm-8" id="crawler-run-items-inserted">@Model.Run.ItemsInserted</dd>
+
+                    <dt class="col-sm-4">Atualizados</dt>
+                    <dd class="col-sm-8" id="crawler-run-items-updated">@Model.Run.ItemsUpdated</dd>
+
+                    <dt class="col-sm-4">Ignorados</dt>
+                    <dd class="col-sm-8" id="crawler-run-items-skipped">@Model.Run.ItemsSkipped</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <strong>Observacoes</strong>
+            </div>
+            <div class="card-body">
+                @if (string.IsNullOrWhiteSpace(Model.Run.Notes))
+                {
+                    <p class="text-muted mb-0" id="crawler-run-notes-empty">Nenhuma observacao registrada.</p>
+                }
+                else
+                {
+                    <pre class="mb-0" id="crawler-run-notes" style="white-space: pre-wrap;">@Model.Run.Notes</pre>
+                }
+                @if (string.IsNullOrWhiteSpace(Model.Run.Notes))
+                {
+                    <pre class="mb-0 d-none" id="crawler-run-notes" style="white-space: pre-wrap;"></pre>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Falhas</strong>
+            </div>
+            <div class="card-body">
+                @if (string.IsNullOrWhiteSpace(Model.Run.ErrorMessage))
+                {
+                    <p class="text-muted mb-0" id="crawler-run-error-empty">Nenhum erro registrado.</p>
+                }
+                else
+                {
+                    <pre class="text-danger mb-0" id="crawler-run-error" style="white-space: pre-wrap;">@Model.Run.ErrorMessage</pre>
+                }
+                @if (string.IsNullOrWhiteSpace(Model.Run.ErrorMessage))
+                {
+                    <pre class="text-danger mb-0 d-none" id="crawler-run-error" style="white-space: pre-wrap;"></pre>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <strong>Acoes rapidas</strong>
+            </div>
+            <div class="list-group list-group-flush">
+                <a class="list-group-item list-group-item-action" asp-page="/ProviderLeads/Index" asp-route-LeadCaptureRunId="@Model.Run.Id">
+                    Filtrar leads deste lote
+                </a>
+                <a class="list-group-item list-group-item-action" asp-page="/CrawlerRuns/Create">
+                    Criar novo lote
+                </a>
+                <a class="list-group-item list-group-item-action" asp-page="/Settings/Index">
+                    Ajustar configuracoes do launcher
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Console do processo</strong>
+        <span id="crawler-run-live-status" class="small text-muted"></span>
+    </div>
+    <div class="card-body bg-dark text-light">
+        <div id="crawler-run-log-stream" class="font-monospace small" style="max-height: 420px; overflow-y: auto;">
+            @if (Model.Logs.Count == 0)
+            {
+                <div id="crawler-run-log-empty" class="text-secondary">Nenhum log disponivel ainda.</div>
+            }
+            else
+            {
+                @foreach (var log in Model.Logs)
+                {
+                    <div class="mb-1" data-log-id="@log.Id">
+                        <span class="text-secondary">@log.CreatedAt.ToLocalTime().ToString("HH:mm:ss")</span>
+                        <span class="text-info">[@log.LogLevel]</span>
+                        <span class="text-warning">[@log.Source]</span>
+                        <span>@log.Message</span>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/crawler-run-live.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,59 @@
+@page
+@model ProFinder.Web.Pages.Regions.IndexModel
+@{
+    ViewData["Title"] = "Regiões";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Regiões</h1>
+        <p>Cadastro de cidades, bairros, zonas, CEPs e parâmetros geográficos.</p>
+    </div>
+    <a class="btn btn-primary" asp-page="/Regions/Create">Nova região</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Estado</th>
+                        <th>Cidade</th>
+                        <th>Bairro</th>
+                        <th>Zona</th>
+                        <th>CEP</th>
+                        <th>Raio (km)</th>
+                        <th>Ativa</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.State</td>
+                            <td>@item.City</td>
+                            <td>@item.Neighborhood</td>
+                            <td>@item.Zone</td>
+                            <td>@item.ZipCode</td>
+                            <td>@item.RadiusKm</td>
+                            <td>@(item.IsActive ? "Sim" : "Não")</td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a class="btn btn-sm btn-outline-primary" asp-page="/Regions/Edit" asp-route-id="@item.Id">Editar</a>
+                                    @if (item.IsActive)
+                                    {
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" onsubmit="return confirm('Deseja desativar esta região?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Desativar</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

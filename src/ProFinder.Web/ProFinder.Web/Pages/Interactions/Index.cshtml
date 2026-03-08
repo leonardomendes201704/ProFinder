@@ -1,0 +1,119 @@
+@page
+@model ProFinder.Web.Pages.Interactions.IndexModel
+@{
+    ViewData["Title"] = "Interações";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Interações</h1>
+        <p>Registre contatos e acompanhe o histórico do relacionamento com cada profissional.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Nova interação</h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    <div class="mb-3">
+                        <label asp-for="Input.ProfessionalId" class="form-label"></label>
+                        <select asp-for="Input.ProfessionalId" asp-items="Model.ProfessionalOptions" class="form-select">
+                            <option value="">Selecione</option>
+                        </select>
+                        <span asp-validation-for="Input.ProfessionalId" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.InteractionType" class="form-label"></label>
+                        <select asp-for="Input.InteractionType" asp-items="Model.InteractionTypeOptions" class="form-select"></select>
+                        <span asp-validation-for="Input.InteractionType" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.InteractionDate" class="form-label"></label>
+                        <input asp-for="Input.InteractionDate" class="form-control" type="datetime-local" value="@Model.Input.InteractionDate.ToString("yyyy-MM-ddTHH:mm")" />
+                        <span asp-validation-for="Input.InteractionDate" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.CreatedBy" class="form-label"></label>
+                        <input asp-for="Input.CreatedBy" class="form-control" />
+                        <span asp-validation-for="Input.CreatedBy" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Description" class="form-label"></label>
+                        <textarea asp-for="Input.Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Input.Description" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar interação</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card filter-card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label asp-for="ProfessionalId" class="form-label">Filtrar por profissional</label>
+                        <select asp-for="ProfessionalId" asp-items="Model.ProfessionalOptions" class="form-select">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+                        <a class="btn btn-outline-secondary" asp-page="/Interactions/Index">Limpar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h2 class="h5 mb-0">Histórico</h2>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.Items.Count == 0)
+                {
+                    <div class="list-empty">Nenhuma interação encontrada.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Profissional</th>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                    <th>Criado por</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>@item.InteractionDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            <a asp-page="/Professionals/Details" asp-route-id="@item.ProfessionalId">@item.ProfessionalName</a>
+                                        </td>
+                                        <td>@item.InteractionTypeLabel</td>
+                                        <td>@item.Description</td>
+                                        <td>@item.CreatedBy</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

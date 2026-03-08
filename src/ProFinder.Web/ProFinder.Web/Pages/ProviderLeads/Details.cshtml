@@ -1,0 +1,118 @@
+@page "{id:int}"
+@model ProFinder.Web.Pages.ProviderLeads.DetailsModel
+@{
+    ViewData["Title"] = "Detalhes do lead";
+}
+
+<div class="page-header">
+    <div>
+        <h1>@Model.Item.Name</h1>
+        <p>Dados consolidados do lead capturado pelo crawler multissite.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="/ProviderLeads/Index">Voltar</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Dados principais</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Origem</dt>
+                    <dd class="col-sm-8">@Model.Item.SourceName (@Model.Item.SiteKey)</dd>
+                    <dt class="col-sm-4">Busca</dt>
+                    <dd class="col-sm-8">@Model.Item.SearchQuery</dd>
+                    <dt class="col-sm-4">Telefone</dt>
+                    <dd class="col-sm-8">@(Model.Item.Phone ?? "-")</dd>
+                    <dt class="col-sm-4">WhatsApp</dt>
+                    <dd class="col-sm-8">@(Model.Item.WhatsApp ?? "-")</dd>
+                    <dt class="col-sm-4">Endereco</dt>
+                    <dd class="col-sm-8">@(Model.Item.Address ?? "-")</dd>
+                    <dt class="col-sm-4">Cidade/UF</dt>
+                    <dd class="col-sm-8">@string.Join(" / ", new[] { Model.Item.City, Model.Item.State }.Where(x => !string.IsNullOrWhiteSpace(x)))</dd>
+                    <dt class="col-sm-4">Website</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(Model.Item.Website))
+                        {
+                            <a href="@Model.Item.Website" target="_blank" rel="noreferrer">@Model.Item.Website</a>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">@Model.Item.ImportStatus</dd>
+                    <dt class="col-sm-4">Dedup key</dt>
+                    <dd class="col-sm-8"><code>@Model.Item.DeduplicationKey</code></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Contexto de captura</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Lote</dt>
+                    <dd class="col-sm-8">#@Model.Item.LeadCaptureRunId</dd>
+                    <dt class="col-sm-4">Profissao</dt>
+                    <dd class="col-sm-8">@(Model.Item.ProfessionName ?? "-")</dd>
+                    <dt class="col-sm-4">Regiao</dt>
+                    <dd class="col-sm-8">@(Model.Item.RegionDisplayName ?? "-")</dd>
+                    <dt class="col-sm-4">Fonte(s)</dt>
+                    <dd class="col-sm-8">@Model.Item.SourceCount</dd>
+                    <dt class="col-sm-4">Rating</dt>
+                    <dd class="col-sm-8">@(Model.Item.Rating?.ToString("0.0") ?? "-")</dd>
+                    <dt class="col-sm-4">Reviews</dt>
+                    <dd class="col-sm-8">@(Model.Item.ReviewCount?.ToString() ?? "-")</dd>
+                    <dt class="col-sm-4">Atualizado</dt>
+                    <dd class="col-sm-8">@Model.Item.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt class="col-sm-4">Criado</dt>
+                    <dd class="col-sm-8">@Model.Item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">URLs de origem</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Listing</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(Model.Item.SourceListingUrl))
+                        {
+                            <a href="@Model.Item.SourceListingUrl" target="_blank" rel="noreferrer">@Model.Item.SourceListingUrl</a>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
+                    <dt class="col-sm-4">Detalhe</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(Model.Item.SourceDetailsUrl))
+                        {
+                            <a href="@Model.Item.SourceDetailsUrl" target="_blank" rel="noreferrer">@Model.Item.SourceDetailsUrl</a>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
+                    <dt class="col-sm-4">JSON fontes</dt>
+                    <dd class="col-sm-8"><code>@(Model.Item.SourceSitesJson ?? "[]")</code></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Payload bruto</div>
+            <div class="card-body">
+                <pre class="small mb-0" style="white-space: pre-wrap;">@(Model.Item.RawPayloadJson ?? "{}")</pre>
+            </div>
+        </div>
+    </div>
+</div>

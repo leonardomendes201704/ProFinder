@@ -1,0 +1,151 @@
+@page
+@model ProFinder.Web.Pages.CrawlerRuns.IndexModel
+@{
+    ViewData["Title"] = "Lotes do crawler";
+}
+
+<div class="page-header d-flex justify-content-between align-items-start gap-3">
+    <div>
+        <h1>Lotes do crawler</h1>
+        <p>Dispare novos jobs multi-site e acompanhe o historico das execucoes do crawler Python.</p>
+    </div>
+    <a class="btn btn-primary" asp-page="/CrawlerRuns/Create">Novo lote</a>
+</div>
+
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="SearchTerm" class="form-label">Busca</label>
+                <input asp-for="SearchTerm" class="form-control" placeholder="Consulta, observacoes ou solicitante" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Status" class="form-label">Status</label>
+                <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="PageSize" class="form-label">Itens</label>
+                <select asp-for="PageSize" class="form-select">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                <a class="btn btn-outline-secondary" asp-page="/CrawlerRuns/Index">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-danger-subtle mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <h2 class="h5 text-danger mb-1">Resetar dados do crawler</h2>
+                <p class="text-muted mb-0">Apaga os registros de `Crawler Leads`, `Google Maps`, logs e lotes de captura. As configuracoes do sistema nao sao afetadas.</p>
+            </div>
+        </div>
+
+        <form method="post"
+              asp-page-handler="Reset"
+              class="row g-3 mt-1"
+              onsubmit="return confirm('Isso vai apagar permanentemente os dados do crawler e dos leads capturados. Deseja continuar?');">
+            <div class="col-md-4">
+                <label asp-for="ResetConfirmation" class="form-label">Confirmacao</label>
+                <input asp-for="ResetConfirmation" class="form-control" autocomplete="off" placeholder="Digite ZERAR" />
+                <div class="form-text">Digite <strong>ZERAR</strong> para habilitar a limpeza.</div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-outline-danger">Resetar dados do crawler</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Consulta</th>
+                    <th>Status</th>
+                    <th>Solicitado por</th>
+                    <th>Contadores</th>
+                    <th>Inicio</th>
+                    <th>Fim</th>
+                    <th class="text-end">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Result.Items.Count == 0)
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">Nenhum lote encontrado.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Result.Items)
+                {
+                    var badgeClass = item.Status switch
+                    {
+                        "Completed" => "bg-success-subtle text-success-emphasis",
+                        "Failed" => "bg-danger-subtle text-danger-emphasis",
+                        "Running" => "bg-info-subtle text-info-emphasis",
+                        "Starting" => "bg-warning-subtle text-warning-emphasis",
+                        "Stopping" => "bg-warning-subtle text-warning-emphasis",
+                        "Stopped" => "bg-secondary-subtle text-secondary-emphasis",
+                        _ => "bg-secondary-subtle text-secondary-emphasis"
+                    };
+
+                    <tr>
+                        <td class="fw-semibold">#@item.Id</td>
+                        <td>
+                            <div class="fw-semibold">@item.SearchQuery</div>
+                            @if (!string.IsNullOrWhiteSpace(item.Notes))
+                            {
+                                <div class="small text-muted">@item.Notes</div>
+                            }
+                        </td>
+                        <td><span class="badge @badgeClass">@item.Status</span></td>
+                        <td>@(item.CreatedBy ?? "-")</td>
+                        <td>
+                            <div>Capturados: @item.ItemsCaptured</div>
+                            <div class="small text-muted">Inseridos: @item.ItemsInserted | Atualizados: @item.ItemsUpdated | Ignorados: @item.ItemsSkipped</div>
+                        </td>
+                        <td>@item.StartedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(item.CompletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" asp-page="/CrawlerRuns/Details" asp-route-id="@item.Id">Detalhes</a>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.Result.TotalPages > 1)
+{
+    <nav class="mt-4" aria-label="Paginacao dos lotes do crawler">
+        <ul class="pagination">
+            @for (var pageIndex = 1; pageIndex <= Model.Result.TotalPages; pageIndex++)
+            {
+                <li class="page-item @(pageIndex == Model.Result.PageNumber ? "active" : null)">
+                    <a class="page-link"
+                       asp-page="/CrawlerRuns/Index"
+                       asp-route-PageNumber="@pageIndex"
+                       asp-route-PageSize="@Model.PageSize"
+                       asp-route-SearchTerm="@Model.SearchTerm"
+                       asp-route-Status="@Model.Status">@pageIndex</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

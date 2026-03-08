@@ -1,0 +1,132 @@
+@page
+@model ProFinder.Web.Pages.CrawlerRuns.CreateModel
+@{
+    ViewData["Title"] = "Novo lote do crawler";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Novo lote do crawler</h1>
+        <p>Dispare uma execucao do crawler multi-site usando as configuracoes persistidas no banco.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" class="row g-3">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.Service" class="form-label"></label>
+                        <input asp-for="Input.Service" class="form-control" placeholder="Ex.: eletricista" />
+                        <span asp-validation-for="Input.Service" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.City" class="form-label"></label>
+                        <input asp-for="Input.City" class="form-control" placeholder="Ex.: praia grande sp" />
+                        <span asp-validation-for="Input.City" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.ProfessionId" class="form-label"></label>
+                        <select asp-for="Input.ProfessionId" asp-items="Model.ProfessionOptions" class="form-select">
+                            <option value="">Nao vincular</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.RegionId" class="form-label"></label>
+                        <select asp-for="Input.RegionId" asp-items="Model.RegionOptions" class="form-select">
+                            <option value="">Nao vincular</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.HeadlessMode" class="form-label"></label>
+                        <select asp-for="Input.HeadlessMode" asp-items="Model.HeadlessOptions" class="form-select"></select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.MaxRecords" class="form-label"></label>
+                        <input asp-for="Input.MaxRecords" class="form-control" placeholder="Vazio = usa o padrao do sistema" />
+                        <span asp-validation-for="Input.MaxRecords" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.RequestedBy" class="form-label"></label>
+                        <input asp-for="Input.RequestedBy" class="form-control" />
+                        <span asp-validation-for="Input.RequestedBy" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label d-block">Sites</label>
+                        <div class="row g-3">
+                            @foreach (var site in Model.SiteOptions)
+                            {
+                                var isChecked = Model.Input.SelectedSites.Contains(site.Value, StringComparer.OrdinalIgnoreCase);
+                                <div class="col-md-6">
+                                    <label class="form-check border rounded p-3 w-100">
+                                        <input class="form-check-input me-2" type="checkbox" name="Input.SelectedSites" value="@site.Value" checked="@isChecked" />
+                                        <span class="fw-semibold">@site.Label</span>
+                                        <span class="d-block text-muted small mt-1">@site.Description</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="Input.SelectedSites" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Iniciar lote</button>
+                        <a class="btn btn-outline-secondary" asp-page="/CrawlerRuns/Index">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <strong>Defaults do launcher</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Python</dt>
+                    <dd class="col-sm-7"><code>@Model.LauncherDefaults.PythonExecutable</code></dd>
+
+                    <dt class="col-sm-5">Script</dt>
+                    <dd class="col-sm-7"><code>@Model.LauncherDefaults.ScriptPath</code></dd>
+
+                    <dt class="col-sm-5">Workdir</dt>
+                    <dd class="col-sm-7"><code>@(string.IsNullOrWhiteSpace(Model.LauncherDefaults.WorkingDirectory) ? "(auto)" : Model.LauncherDefaults.WorkingDirectory)</code></dd>
+
+                    <dt class="col-sm-5">Export</dt>
+                    <dd class="col-sm-7"><code>@Model.LauncherDefaults.ExportDirectory</code></dd>
+
+                    <dt class="col-sm-5">Sites</dt>
+                    <dd class="col-sm-7"><code>@Model.LauncherDefaults.DefaultSitesCsv</code></dd>
+
+                    <dt class="col-sm-5">Log level</dt>
+                    <dd class="col-sm-7"><code>@Model.LauncherDefaults.LogLevel</code></dd>
+
+                    <dt class="col-sm-5">Driver ODBC</dt>
+                    <dd class="col-sm-7"><code>@Model.LauncherDefaults.SqlDriver</code></dd>
+
+                    <dt class="col-sm-5">Override ODBC</dt>
+                    <dd class="col-sm-7">@(Model.LauncherDefaults.HasConnectionStringOverride ? "Configurado" : "Usando conversao automatica")</dd>
+                </dl>
+            </div>
+            <div class="card-footer">
+                <a class="btn btn-sm btn-outline-secondary" asp-page="/Settings/Index">Abrir configuracoes</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,76 @@
+@page
+@model ProFinder.Web.Pages.GoogleMapsLeads.IndexModel
+@using ProFinder.Web.Realtime
+@{
+    ViewData["Title"] = "Leads do Google Maps";
+}
+
+<div class="page-header">
+    <div>
+        <h1>Leads do Google Maps</h1>
+        <p>Acompanhe as capturas brutas do Google Maps antes da qualificação para profissionais.</p>
+    </div>
+    <div class="text-end">
+        <div class="small text-muted">Atualização em tempo real</div>
+        <div id="google-maps-leads-connection-status" class="small fw-semibold">Conectando...</div>
+    </div>
+</div>
+
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="SearchTerm" class="form-label">Busca</label>
+                <input asp-for="SearchTerm" class="form-control" placeholder="Nome, telefone, endereço ou consulta" />
+            </div>
+            <div class="col-md-2">
+                <label asp-for="ProfessionId" class="form-label">Profissão</label>
+                <select asp-for="ProfessionId" asp-items="Model.ProfessionOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="RegionId" class="form-label">Região alvo</label>
+                <select asp-for="RegionId" asp-items="Model.RegionOptions" class="form-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="LeadCaptureRunId" class="form-label">Lote</label>
+                <input asp-for="LeadCaptureRunId" class="form-control" placeholder="ID do lote" />
+            </div>
+            <div class="col-md-1">
+                <label asp-for="PageSize" class="form-label">Itens</label>
+                <select asp-for="PageSize" class="form-select">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="ImportStatus" class="form-label">Status</label>
+                <select asp-for="ImportStatus" asp-items="Model.ImportStatusOptions" class="form-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="col-12 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                    <a class="btn btn-outline-secondary" asp-page="/GoogleMapsLeads/Index">Limpar</a>
+                </div>
+                <div id="google-maps-leads-live-status" class="small text-muted"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="google-maps-leads-results"
+     data-results-url="@Url.Page("/GoogleMapsLeads/Index", pageHandler: "Results")"
+     data-hub-url="@GoogleMapsLeadRealtimeNotifier.HubRoute">
+    @await Html.PartialAsync("_Results", Model)
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/google-maps-leads-live.js" asp-append-version="true"></script>
+}

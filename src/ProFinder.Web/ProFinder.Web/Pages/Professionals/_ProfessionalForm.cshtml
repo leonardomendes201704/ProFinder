@@ -1,0 +1,97 @@
+@model ProFinder.Web.Pages.Professionals.ProfessionalFormPageModel
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Input.FullName" class="form-label"></label>
+        <input asp-for="Input.FullName" class="form-control" />
+        <span asp-validation-for="Input.FullName" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Input.BusinessName" class="form-label"></label>
+        <input asp-for="Input.BusinessName" class="form-control" />
+        <span asp-validation-for="Input.BusinessName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.Phone" class="form-label"></label>
+        <input asp-for="Input.Phone" class="form-control" />
+        <span asp-validation-for="Input.Phone" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.WhatsApp" class="form-label"></label>
+        <input asp-for="Input.WhatsApp" class="form-control" />
+        <span asp-validation-for="Input.WhatsApp" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.Email" class="form-label"></label>
+        <input asp-for="Input.Email" class="form-control" />
+        <span asp-validation-for="Input.Email" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.DocumentNumber" class="form-label"></label>
+        <input asp-for="Input.DocumentNumber" class="form-control" />
+        <span asp-validation-for="Input.DocumentNumber" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.ProfessionId" class="form-label"></label>
+        <select asp-for="Input.ProfessionId" asp-items="Model.ProfessionOptions" class="form-select">
+            <option value="">Selecione</option>
+        </select>
+        <span asp-validation-for="Input.ProfessionId" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.SourceId" class="form-label"></label>
+        <select asp-for="Input.SourceId" asp-items="Model.SourceOptions" class="form-select">
+            <option value="">Selecione</option>
+        </select>
+        <span asp-validation-for="Input.SourceId" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.StatusId" class="form-label"></label>
+        <select asp-for="Input.StatusId" asp-items="Model.StatusOptions" class="form-select">
+            <option value="">Selecione</option>
+        </select>
+        <span asp-validation-for="Input.StatusId" class="text-danger"></span>
+    </div>
+    <div class="col-md-8">
+        <label asp-for="Input.RegionIds" class="form-label"></label>
+        <select asp-for="Input.RegionIds" asp-items="Model.RegionOptions" class="form-select" multiple></select>
+        <div class="form-text">Use Ctrl/Cmd para selecionar mais de uma região.</div>
+        <span asp-validation-for="Input.RegionIds" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Input.PrimaryRegionId" class="form-label"></label>
+        <select asp-for="Input.PrimaryRegionId" asp-items="Model.RegionOptions" class="form-select">
+            <option value="">Definir automaticamente</option>
+        </select>
+        <span asp-validation-for="Input.PrimaryRegionId" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Input.Website" class="form-label"></label>
+        <input asp-for="Input.Website" class="form-control" />
+        <span asp-validation-for="Input.Website" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Input.Instagram" class="form-label"></label>
+        <input asp-for="Input.Instagram" class="form-control" />
+        <span asp-validation-for="Input.Instagram" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Input.Notes" class="form-label"></label>
+        <textarea asp-for="Input.Notes" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Input.Notes" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <div class="form-check mt-4">
+            <input asp-for="Input.IsAutonomous" class="form-check-input" />
+            <label asp-for="Input.IsAutonomous" class="form-check-label"></label>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-check mt-4">
+            <input asp-for="Input.IsActive" class="form-check-input" />
+            <label asp-for="Input.IsActive" class="form-check-label"></label>
+        </div>
+    </div>
+</div>
