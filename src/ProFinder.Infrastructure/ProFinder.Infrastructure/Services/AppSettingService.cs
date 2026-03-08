@@ -24,6 +24,7 @@ public class AppSettingService : IAppSettingService
 
     public async Task<IReadOnlyList<AppSettingGroupDto>> GetGroupedAsync(CancellationToken cancellationToken = default)
     {
+        await CrawlerRuntimeSettingCatalog.EnsureDefaultsAsync(_context, cancellationToken);
         await CrawlerLauncherSettingCatalog.EnsureDefaultsAsync(_context, cancellationToken);
 
         var items = await _context.AppSettings
@@ -59,6 +60,7 @@ public class AppSettingService : IAppSettingService
 
     public async Task<AppSettingDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
+        await CrawlerRuntimeSettingCatalog.EnsureDefaultsAsync(_context, cancellationToken);
         await CrawlerLauncherSettingCatalog.EnsureDefaultsAsync(_context, cancellationToken);
 
         var entity = await _context.AppSettings

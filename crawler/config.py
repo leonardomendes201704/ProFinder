@@ -27,6 +27,15 @@ class CrawlerSettings:
     google_maps_max_idle_scrolls: int = 8
     google_maps_scroll_pause_ms: int = 1500
     browser_headless: bool = True
+    browser_chrome_arguments: list[str] = field(
+        default_factory=lambda: [
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--disable-software-rasterizer",
+            "--remote-debugging-pipe",
+        ]
+    )
 
     @classmethod
     def from_database(cls, settings: dict[str, str]) -> "CrawlerSettings":
@@ -59,6 +68,8 @@ class CrawlerSettings:
                 instance.google_maps_scroll_pause_ms = _to_int(value, instance.google_maps_scroll_pause_ms)
             elif key == "crawler.browser_headless":
                 instance.browser_headless = _to_bool(value, instance.browser_headless)
+            elif key == "crawler.browser.chrome_arguments_json":
+                instance.browser_chrome_arguments = _to_json_list(value) or instance.browser_chrome_arguments
 
         return instance
 

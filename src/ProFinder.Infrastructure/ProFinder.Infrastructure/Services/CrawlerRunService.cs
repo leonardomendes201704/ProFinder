@@ -150,6 +150,7 @@ public class CrawlerRunService : ICrawlerRunService
 
     public async Task<CrawlerLauncherDefaultsDto> GetLauncherDefaultsAsync(CancellationToken cancellationToken = default)
     {
+        await CrawlerRuntimeSettingCatalog.EnsureDefaultsAsync(_context, cancellationToken);
         var values = await CrawlerLauncherSettingCatalog.LoadValuesAsync(_context, cancellationToken);
         return new CrawlerLauncherDefaultsDto
         {
@@ -159,7 +160,7 @@ public class CrawlerRunService : ICrawlerRunService
             ExportDirectory = GetSetting(values, CrawlerLauncherSettingCatalog.ExportDirectoryKey, "crawler/exports"),
             DefaultSitesCsv = GetSetting(values, CrawlerLauncherSettingCatalog.DefaultSitesKey, "google_maps,olx,telelistas,guiamais"),
             LogLevel = GetSetting(values, CrawlerLauncherSettingCatalog.LogLevelKey, "INFO"),
-            SqlDriver = GetSetting(values, CrawlerLauncherSettingCatalog.SqlDriverKey, "ODBC Driver 17 for SQL Server"),
+            SqlDriver = GetSetting(values, CrawlerLauncherSettingCatalog.SqlDriverKey, "ODBC Driver 18 for SQL Server"),
             HasConnectionStringOverride = !string.IsNullOrWhiteSpace(GetSetting(values, CrawlerLauncherSettingCatalog.ConnectionStringOverrideKey, string.Empty))
         };
     }
@@ -168,6 +169,7 @@ public class CrawlerRunService : ICrawlerRunService
     {
         ValidateRequest(dto);
 
+        await CrawlerRuntimeSettingCatalog.EnsureDefaultsAsync(_context, cancellationToken);
         var launcherSettings = await CrawlerLauncherSettingCatalog.LoadValuesAsync(_context, cancellationToken);
         var requestedBy = string.IsNullOrWhiteSpace(dto.RequestedBy) ? "AdminUI" : dto.RequestedBy.Trim();
         var searchQuery = BuildSearchQuery(dto.Service, dto.City);
@@ -690,7 +692,7 @@ public class CrawlerRunService : ICrawlerRunService
         var sqlBuilder = new SqlConnectionStringBuilder(applicationConnectionString);
         var parts = new List<string>
         {
-            $"Driver={WrapOdbcValue(GetSetting(launcherSettings, CrawlerLauncherSettingCatalog.SqlDriverKey, "ODBC Driver 17 for SQL Server"))}",
+            $"Driver={WrapOdbcValue(GetSetting(launcherSettings, CrawlerLauncherSettingCatalog.SqlDriverKey, "ODBC Driver 18 for SQL Server"))}",
             $"Server={WrapOdbcValue(sqlBuilder.DataSource)}",
             $"Database={WrapOdbcValue(sqlBuilder.InitialCatalog)}",
             $"Encrypt={(sqlBuilder.Encrypt ? "yes" : "no")}",

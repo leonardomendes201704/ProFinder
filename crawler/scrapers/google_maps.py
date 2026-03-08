@@ -99,7 +99,7 @@ class GoogleMapsScraper(BaseScraper):
         emit_provider: Callable[[Provider], None] | None,
     ) -> tuple[list[Provider], int]:
         self._logger.info("Google Maps via Selenium iniciado (headless=%s).", settings.browser_headless)
-        driver = self._create_driver(settings.browser_headless)
+        driver = self._create_driver(settings)
         providers: list[Provider] = []
         visited_urls: set[str] = set()
         idle_scrolls = 0
@@ -177,16 +177,21 @@ class GoogleMapsScraper(BaseScraper):
         finally:
             driver.quit()
 
-    def _create_driver(self, headless: bool) -> webdriver.Chrome:
+    def _create_driver(self, settings: CrawlerSettings) -> webdriver.Chrome:
         options = Options()
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--lang=pt-BR")
         options.add_argument("--start-maximized")
         browser_binary = os.getenv("CHROME_BIN") or os.getenv("GOOGLE_CHROME_BIN")
         driver_path = os.getenv("CHROMEDRIVER_PATH")
-        if headless:
+        if settings.browser_headless:
             options.add_argument("--headless=new")
             options.add_argument("--window-size=1920,1080")
+
+        for argument in settings.browser_chrome_arguments:
+            normalized_argument = str(argument).strip()
+            if normalized_argument:
+                options.add_argument(normalized_argument)
 
         if browser_binary:
             options.binary_location = browser_binary
