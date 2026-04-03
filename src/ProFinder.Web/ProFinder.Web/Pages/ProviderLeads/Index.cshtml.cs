@@ -60,6 +60,21 @@ public class IndexModel : PageModel
 
     public IReadOnlyList<SelectListItem> ImportStatusOptions { get; private set; } = [];
 
+    public string CurrentListUrl =>
+        Url.Page("/ProviderLeads/Index", new
+        {
+            SearchTerm,
+            LeadSourceId,
+            ProfessionId,
+            RegionId,
+            LeadCaptureRunId,
+            SiteKey,
+            City,
+            ImportStatus,
+            PageNumber,
+            PageSize
+        }) ?? "/ProviderLeads/Index";
+
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
         await LoadFilterOptionsAsync(cancellationToken);

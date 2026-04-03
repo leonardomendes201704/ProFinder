@@ -74,6 +74,17 @@
                     <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Item.ProfessionNamesDisplay) ? "-" : Model.Item.ProfessionNamesDisplay)</dd>
                     <dt class="col-sm-4">Regiao</dt>
                     <dd class="col-sm-8">@(Model.Item.RegionDisplayName ?? "-")</dd>
+                    <dt class="col-sm-4">Profissional</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Item.ImportedProfessionalId.HasValue)
+                        {
+                            <a asp-page="/Professionals/Details" asp-route-id="@Model.Item.ImportedProfessionalId.Value">@Model.Item.ImportedProfessionalName</a>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
                     <dt class="col-sm-4">Fonte(s)</dt>
                     <dd class="col-sm-8">@Model.Item.SourceCount</dd>
                     <dt class="col-sm-4">Rating</dt>

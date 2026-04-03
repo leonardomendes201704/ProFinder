@@ -15,6 +15,8 @@ public abstract class ProfessionalFormPageModel : PageModel
         _lookupService = lookupService;
     }
 
+    protected ILookupService LookupService => _lookupService;
+
     [BindProperty]
     public UpsertProfessionalDto Input { get; set; } = new();
 

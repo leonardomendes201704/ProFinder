@@ -44,6 +44,10 @@ public class ProviderLeadListItemDto
 
     public string ImportStatus { get; set; } = string.Empty;
 
+    public int? ImportedProfessionalId { get; set; }
+
+    public string? ImportedProfessionalName { get; set; }
+
     public int SourceCount { get; set; }
 
     public DateTime ScrapedAt { get; set; }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProFinder.Application.Common;
 using ProFinder.Application.Common.Exceptions;
+using ProFinder.Application.DTOs.Professionals;
 using ProFinder.Application.DTOs.ProviderLeads;
 using ProFinder.Application.Filters;
 using ProFinder.Application.Interfaces.Services;
@@ -27,6 +28,7 @@ public class ProviderLeadService : IProviderLeadService
                 .ThenInclude(x => x.Profession)
             .Include(x => x.Region)
             .Include(x => x.LeadSource)
+            .Include(x => x.ImportedProfessional)
             .AsSplitQuery()
             .AsQueryable();
 
@@ -161,6 +163,32 @@ public class ProviderLeadService : IProviderLeadService
         };
     }
 
+    public async Task<int> ConvertToProfessionalAsync(int leadId, UpsertProfessionalDto dto, CancellationToken cancellationToken = default)
+    {
+        var lead = await _context.ProviderLeads
+            .FirstOrDefaultAsync(x => x.Id == leadId, cancellationToken)
+            ?? throw new NotFoundException("Lead capturado nao encontrado.");
+
+        if (lead.ImportedProfessionalId.HasValue || string.Equals(lead.ImportStatus, "Imported", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException("Este lead ja foi convertido em profissional.");
+        }
+
+        var prepared = await ProfessionalWriteSupport.PrepareAsync(_context, dto, null, cancellationToken);
+        var professional = ProfessionalWriteSupport.CreateEntity(dto, prepared);
+
+        lead.ImportStatus = "Imported";
+        lead.ImportedProfessional = professional;
+
+        _context.Professionals.Add(professional);
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return professional.Id;
+    }
+
     private static ProviderLeadListItemDto MapToListItem(ProviderLead entity)
     {
         var professions = BuildProfessionLookups(entity.ProviderLeadProfessions, entity.Profession);
@@ -187,6 +215,8 @@ public class ProviderLeadService : IProviderLeadService
             RegionDisplayName = BuildRegionDisplay(entity.Region),
             SourceName = entity.LeadSource?.Name ?? string.Empty,
             ImportStatus = entity.ImportStatus,
+            ImportedProfessionalId = entity.ImportedProfessionalId,
+            ImportedProfessionalName = entity.ImportedProfessional?.FullName,
             SourceCount = entity.SourceCount,
             ScrapedAt = entity.ScrapedAt
         };
