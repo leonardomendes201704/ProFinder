@@ -187,32 +187,8 @@ public class ProfessionalService : IProfessionalService
 
     public async Task<int> CreateAsync(UpsertProfessionalDto dto, CancellationToken cancellationToken = default)
     {
-        var professionIds = GetEffectiveProfessionIds(dto);
-
-        await EnsureLookupReferencesAsync(professionIds, dto.SourceId, dto.StatusId, dto.RegionIds, cancellationToken);
-        var normalized = NormalizeProfessional(dto);
-        await EnsureProfessionalIsUniqueAsync(normalized.Phone, normalized.WhatsApp, normalized.Email, null, cancellationToken);
-
-        var professional = new Professional
-        {
-            FullName = normalized.FullName,
-            BusinessName = normalized.BusinessName,
-            Phone = normalized.Phone,
-            WhatsApp = normalized.WhatsApp,
-            Email = normalized.Email,
-            DocumentNumber = normalized.DocumentNumber,
-            ProfessionId = dto.ProfessionId,
-            SourceId = dto.SourceId,
-            StatusId = dto.StatusId,
-            Notes = normalized.Notes,
-            Website = normalized.Website,
-            Instagram = normalized.Instagram,
-            IsAutonomous = dto.IsAutonomous,
-            IsActive = dto.IsActive
-        };
-
-        ApplyProfessions(professional, professionIds, dto.ProfessionId);
-        ApplyRegions(professional, dto.RegionIds, dto.PrimaryRegionId);
+        var prepared = await ProfessionalWriteSupport.PrepareAsync(_context, dto, null, cancellationToken);
+        var professional = ProfessionalWriteSupport.CreateEntity(dto, prepared);
 
         _context.Professionals.Add(professional);
         await _context.SaveChangesAsync(cancellationToken);
@@ -223,11 +199,7 @@ public class ProfessionalService : IProfessionalService
 
     public async Task UpdateAsync(int id, UpsertProfessionalDto dto, CancellationToken cancellationToken = default)
     {
-        var professionIds = GetEffectiveProfessionIds(dto);
-
-        await EnsureLookupReferencesAsync(professionIds, dto.SourceId, dto.StatusId, dto.RegionIds, cancellationToken);
-        var normalized = NormalizeProfessional(dto);
-        await EnsureProfessionalIsUniqueAsync(normalized.Phone, normalized.WhatsApp, normalized.Email, id, cancellationToken);
+        var prepared = await ProfessionalWriteSupport.PrepareAsync(_context, dto, id, cancellationToken);
 
         var professional = await _context.Professionals
             .Include(x => x.ProfessionalRegions)
@@ -235,28 +207,7 @@ public class ProfessionalService : IProfessionalService
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
             ?? throw new NotFoundException("Profissional nao encontrado.");
 
-        professional.FullName = normalized.FullName;
-        professional.BusinessName = normalized.BusinessName;
-        professional.Phone = normalized.Phone;
-        professional.WhatsApp = normalized.WhatsApp;
-        professional.Email = normalized.Email;
-        professional.DocumentNumber = normalized.DocumentNumber;
-        professional.ProfessionId = dto.ProfessionId;
-        professional.SourceId = dto.SourceId;
-        professional.StatusId = dto.StatusId;
-        professional.Notes = normalized.Notes;
-        professional.Website = normalized.Website;
-        professional.Instagram = normalized.Instagram;
-        professional.IsAutonomous = dto.IsAutonomous;
-        professional.IsActive = dto.IsActive;
-
-        _context.ProfessionalRegions.RemoveRange(professional.ProfessionalRegions);
-        professional.ProfessionalRegions.Clear();
-        ApplyRegions(professional, dto.RegionIds, dto.PrimaryRegionId);
-
-        _context.ProfessionalProfessions.RemoveRange(professional.ProfessionalProfessions);
-        professional.ProfessionalProfessions.Clear();
-        ApplyProfessions(professional, professionIds, dto.ProfessionId);
+        ProfessionalWriteSupport.ApplyToExisting(professional, dto, prepared, _context);
 
         await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Professional {ProfessionalId} updated.", professional.Id);
@@ -271,134 +222,6 @@ public class ProfessionalService : IProfessionalService
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Professional {ProfessionalId} deactivated.", professional.Id);
-    }
-
-    private async Task EnsureLookupReferencesAsync(
-        IReadOnlyCollection<int> professionIds,
-        int sourceId,
-        int statusId,
-        IEnumerable<int> regionIds,
-        CancellationToken cancellationToken)
-    {
-        if (professionIds.Count == 0)
-        {
-            throw new ValidationException("Selecione ao menos uma profissao.");
-        }
-
-        var existingProfessionCount = await _context.Professions.CountAsync(
-            x => professionIds.Contains(x.Id) && x.IsActive,
-            cancellationToken);
-        var sourceExists = await _context.LeadSources.AnyAsync(x => x.Id == sourceId && x.IsActive, cancellationToken);
-        var statusExists = await _context.LeadStatuses.AnyAsync(x => x.Id == statusId && x.IsActive, cancellationToken);
-
-        if (existingProfessionCount != professionIds.Count || !sourceExists || !statusExists)
-        {
-            throw new ValidationException("Profissao, origem ou status invalido.");
-        }
-
-        var distinctRegionIds = regionIds.Distinct().ToList();
-        if (distinctRegionIds.Count == 0)
-        {
-            return;
-        }
-
-        var existingCount = await _context.Regions.CountAsync(
-            x => distinctRegionIds.Contains(x.Id) && x.IsActive,
-            cancellationToken);
-
-        if (existingCount != distinctRegionIds.Count)
-        {
-            throw new ValidationException("Uma ou mais regioes informadas nao existem ou estao inativas.");
-        }
-    }
-
-    private async Task EnsureProfessionalIsUniqueAsync(
-        string? phone,
-        string? whatsApp,
-        string? email,
-        int? currentId,
-        CancellationToken cancellationToken)
-    {
-        var exists = await _context.Professionals.AnyAsync(
-            x => x.Id != currentId &&
-                 x.IsActive &&
-                 (
-                     (phone != null && (x.Phone == phone || x.WhatsApp == phone)) ||
-                     (whatsApp != null && (x.Phone == whatsApp || x.WhatsApp == whatsApp)) ||
-                     (email != null && x.Email == email)
-                 ),
-            cancellationToken);
-
-        if (exists)
-        {
-            throw new DuplicateResourceException("Ja existe um profissional ativo com o mesmo telefone, WhatsApp ou e-mail.");
-        }
-    }
-
-    private static (string FullName, string? BusinessName, string? Phone, string? WhatsApp, string? Email, string? DocumentNumber, string? Notes, string? Website, string? Instagram) NormalizeProfessional(UpsertProfessionalDto dto)
-    {
-        var fullName = dto.FullName.Trim();
-
-        if (string.IsNullOrWhiteSpace(fullName))
-        {
-            throw new ValidationException("O nome do profissional e obrigatorio.");
-        }
-
-        return
-        (
-            fullName,
-            NormalizeOptional(dto.BusinessName),
-            PhoneNormalizer.Normalize(dto.Phone),
-            PhoneNormalizer.Normalize(dto.WhatsApp),
-            NormalizeEmail(dto.Email),
-            NormalizeOptional(dto.DocumentNumber),
-            NormalizeOptional(dto.Notes),
-            NormalizeOptional(dto.Website),
-            NormalizeOptional(dto.Instagram)
-        );
-    }
-
-    private static IReadOnlyList<int> GetEffectiveProfessionIds(UpsertProfessionalDto dto)
-    {
-        return dto.ProfessionIds
-            .Append(dto.ProfessionId)
-            .Where(x => x > 0)
-            .Distinct()
-            .ToList();
-    }
-
-    private static void ApplyProfessions(Professional professional, IReadOnlyCollection<int> professionIds, int primaryProfessionId)
-    {
-        foreach (var professionId in professionIds.Distinct())
-        {
-            professional.ProfessionalProfessions.Add(new ProfessionalProfession
-            {
-                ProfessionId = professionId,
-                IsPrimary = professionId == primaryProfessionId
-            });
-        }
-    }
-
-    private static void ApplyRegions(Professional professional, IReadOnlyCollection<int> regionIds, int? primaryRegionId)
-    {
-        var distinctRegionIds = regionIds.Distinct().ToList();
-
-        if (distinctRegionIds.Count == 0)
-        {
-            return;
-        }
-
-        var effectivePrimaryRegionId = primaryRegionId ?? distinctRegionIds.First();
-
-        foreach (var regionId in distinctRegionIds)
-        {
-            professional.ProfessionalRegions.Add(new ProfessionalRegion
-            {
-                RegionId = regionId,
-                ConfidenceLevel = regionId == effectivePrimaryRegionId ? "Alta" : "Media",
-                IsPrimaryRegion = regionId == effectivePrimaryRegionId
-            });
-        }
     }
 
     private static ProfessionalListItemDto MapToListItem(Professional professional)
@@ -490,9 +313,4 @@ public class ProfessionalService : IProfessionalService
             .Where(value => !string.IsNullOrWhiteSpace(value)));
     }
 
-    private static string? NormalizeOptional(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static string? NormalizeEmail(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToLowerInvariant();
 }

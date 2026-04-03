@@ -1,24 +1,26 @@
 @page
 @model ProFinder.Web.Pages.Professionals.CreateModel
 @{
-    ViewData["Title"] = "Novo profissional";
+    ViewData["Title"] = Model.PageTitle;
 }
 
 <div class="page-header">
     <div>
-        <h1>Novo profissional</h1>
-        <p>Cadastre um profissional e vincule sua atuação por região.</p>
+        <h1>@Model.PageTitle</h1>
+        <p>@Model.PageDescription</p>
     </div>
-    <a class="btn btn-outline-secondary" asp-page="/Professionals/Index">Voltar</a>
+    <a class="btn btn-outline-secondary" href="@Model.CancelUrl">Voltar</a>
 </div>
 
 <div class="card">
     <div class="card-body">
         <form method="post">
+            <input type="hidden" asp-for="LeadId" />
+            <input type="hidden" asp-for="ReturnUrl" />
             @await Html.PartialAsync("_ProfessionalForm", Model)
             <div class="d-flex gap-2 mt-4">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a class="btn btn-outline-secondary" asp-page="/Professionals/Index">Cancelar</a>
+                <button type="submit" class="btn btn-primary">@Model.SubmitLabel</button>
+                <a class="btn btn-outline-secondary" href="@Model.CancelUrl">Cancelar</a>
             </div>
         </form>
     </div>
