@@ -9,6 +9,10 @@ public interface IProviderLeadService
 {
     Task<PagedResult<ProviderLeadListItemDto>> GetPagedAsync(ProviderLeadQueryFilter filter, CancellationToken cancellationToken = default);
 
+    Task<ProviderLeadMapResultDto> GetMapItemsAsync(ProviderLeadQueryFilter filter, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ProviderLeadExportItemDto>> GetExportItemsAsync(ProviderLeadQueryFilter filter, CancellationToken cancellationToken = default);
+
     Task<ProviderLeadDetailsDto> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     Task<int> ConvertToProfessionalAsync(int leadId, UpsertProfessionalDto dto, CancellationToken cancellationToken = default);

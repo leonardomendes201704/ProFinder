@@ -135,3 +135,98 @@ public class ProviderLeadDetailsDto
 
     public DateTime UpdatedAt { get; set; }
 }
+
+public class ProviderLeadMapItemDto
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string LocalityDisplay { get; set; } = string.Empty;
+
+    public string? RegionDisplayName { get; set; }
+
+    public string SourceName { get; set; } = string.Empty;
+
+    public decimal Latitude { get; set; }
+
+    public decimal Longitude { get; set; }
+}
+
+public class ProviderLeadMapResultDto
+{
+    public int TotalFiltered { get; set; }
+
+    public int TotalMapped { get; set; }
+
+    public IReadOnlyList<ProviderLeadMapItemDto> Items { get; set; } = [];
+}
+
+public class ProviderLeadExportItemDto
+{
+    public int Id { get; set; }
+
+    public int LeadCaptureRunId { get; set; }
+
+    public int LeadSourceId { get; set; }
+
+    public string SourceName { get; set; } = string.Empty;
+
+    public string SiteKey { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+
+    public string? Phone { get; set; }
+
+    public string? WhatsApp { get; set; }
+
+    public string? NormalizedPhone { get; set; }
+
+    public string? Website { get; set; }
+
+    public string SearchQuery { get; set; } = string.Empty;
+
+    public string? Address { get; set; }
+
+    public string? Neighborhood { get; set; }
+
+    public string? City { get; set; }
+
+    public string? State { get; set; }
+
+    public string LocalityDisplay { get; set; } = string.Empty;
+
+    public string? RegionDisplayName { get; set; }
+
+    public string? ProfessionName { get; set; }
+
+    public string ProfessionNamesDisplay { get; set; } = string.Empty;
+
+    public string ImportStatus { get; set; } = string.Empty;
+
+    public int? ImportedProfessionalId { get; set; }
+
+    public string? ImportedProfessionalName { get; set; }
+
+    public decimal? Latitude { get; set; }
+
+    public decimal? Longitude { get; set; }
+
+    public int SourceCount { get; set; }
+
+    public string? SourceListingUrl { get; set; }
+
+    public string? SourceDetailsUrl { get; set; }
+
+    public string? ExternalId { get; set; }
+
+    public decimal? Rating { get; set; }
+
+    public int? ReviewCount { get; set; }
+
+    public DateTime ScrapedAt { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+}

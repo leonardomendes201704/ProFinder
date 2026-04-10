@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using ProFinder.Infrastructure.Extensions;
 using ProFinder.Web.Hubs;
@@ -8,6 +9,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto |
+        ForwardedHeaders.XForwardedHost;
+
+    options.ForwardLimit = 1;
+
+    // The app runs behind nginx + Docker in production, so the proxy address can vary by host network.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 var realtimeSection = builder.Configuration.GetSection(GoogleMapsLeadRealtimeOptions.SectionName);
 builder.Services.AddSingleton(new GoogleMapsLeadRealtimeOptions
@@ -25,6 +39,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

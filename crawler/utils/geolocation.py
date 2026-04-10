@@ -11,6 +11,9 @@ from crawler.config import CrawlerSettings
 from crawler.models.provider import Provider
 from crawler.utils.parser import normalize_whitespace, sanitize_extracted_text
 
+PLACE_COORDINATE_PATTERN = re.compile(r"!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)")
+VIEWPORT_COORDINATE_PATTERN = re.compile(r"@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)")
+
 
 @dataclass(slots=True)
 class GeoCoordinates:
@@ -43,9 +46,10 @@ class ProviderGeolocator:
             return provider
 
         direct_coordinates = self._extract_from_urls(
-            provider.source_details_url,
             provider.source_listing_url,
             provider.raw_payload.get("place_url") if provider.raw_payload else None,
+            provider.source_details_url,
+            provider.raw_payload.get("details_url") if provider.raw_payload else None,
         )
 
         if direct_coordinates.latitude is not None and direct_coordinates.longitude is not None:
@@ -129,26 +133,41 @@ class ProviderGeolocator:
         return normalize_whitespace(", ".join(parts))
 
     def _extract_from_urls(self, *urls: object) -> GeoCoordinates:
-        for raw_url in urls:
-            url = str(raw_url).strip() if raw_url else None
-            if not url:
-                continue
+        return extract_direct_coordinates(*urls)
 
-            at_match = re.search(r"@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)", url)
-            if at_match:
-                return GeoCoordinates(
-                    latitude=_to_float(at_match.group(1)),
-                    longitude=_to_float(at_match.group(2)),
-                )
 
-            place_match = re.search(r"!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)", url)
-            if place_match:
-                return GeoCoordinates(
-                    latitude=_to_float(place_match.group(1)),
-                    longitude=_to_float(place_match.group(2)),
-                )
+def extract_direct_coordinates(*urls: object) -> GeoCoordinates:
+    normalized_urls = [str(raw_url).strip() for raw_url in urls if raw_url and str(raw_url).strip()]
 
+    for extractor in (_extract_place_coordinates, _extract_viewport_coordinates):
+        for url in normalized_urls:
+            coordinates = extractor(url)
+            if coordinates.latitude is not None and coordinates.longitude is not None:
+                return coordinates
+
+    return GeoCoordinates()
+
+
+def _extract_place_coordinates(url: str) -> GeoCoordinates:
+    place_match = PLACE_COORDINATE_PATTERN.search(url)
+    if not place_match:
         return GeoCoordinates()
+
+    return GeoCoordinates(
+        latitude=_to_float(place_match.group(1)),
+        longitude=_to_float(place_match.group(2)),
+    )
+
+
+def _extract_viewport_coordinates(url: str) -> GeoCoordinates:
+    at_match = VIEWPORT_COORDINATE_PATTERN.search(url)
+    if not at_match:
+        return GeoCoordinates()
+
+    return GeoCoordinates(
+        latitude=_to_float(at_match.group(1)),
+        longitude=_to_float(at_match.group(2)),
+    )
 
 
 def _to_float(value: object) -> float | None:

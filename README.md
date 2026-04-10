@@ -147,15 +147,20 @@ Ambiente configurado:
 - branch de deploy: `main`
 - porta interna da Web no host: `127.0.0.1:5200`
 - porta interna da API no host: `127.0.0.1:5201`
+- URL publica atual: `https://profinder.consertapramim.com`
 
 O Nginx da VPS pode usar o template em `deploy/nginx/profinder.consertapramim.com.conf.example`.
 
-Observacao importante:
+Observacoes importantes:
 
-- `profinder.consertapramim.com` ainda nao resolve no DNS
-- enquanto o DNS nao apontar para a VPS, o HTTPS com Certbot nao pode ser emitido
+- em `2026-04-09`, `https://profinder.consertapramim.com/ProviderLeads` respondeu normalmente
+- o bloco `map $http_upgrade $connection_upgrade` precisa existir no nginx para upgrade/WebSocket
+- a aplicacao agora espera `X-Forwarded-For`, `X-Forwarded-Proto` e `X-Forwarded-Host` vindos do proxy reverso
+- em producao, prefira publicar Docker apenas em loopback, por exemplo:
+  - `WEB_PORT=127.0.0.1:5200`
+  - `API_PORT=127.0.0.1:5201`
 
-Quando o DNS estiver apontando para `187.77.48.150`, o passo esperado na VPS e:
+Se o HTTPS ainda nao estiver emitido em um ambiente novo, o passo esperado na VPS e:
 
 ```bash
 certbot --nginx -d profinder.consertapramim.com
@@ -181,6 +186,21 @@ Criar migration:
 ```powershell
 dotnet ef migrations add NomeDaMigration --project src\ProFinder.Infrastructure\ProFinder.Infrastructure\ProFinder.Infrastructure.csproj --startup-project src\ProFinder.Api\ProFinder.Api\ProFinder.Api.csproj --output-dir Data\Migrations
 ```
+
+Observacao:
+
+- o pipeline de deploy nao executa migrations automaticamente; qualquer release com alteracao de schema exige essa etapa manual antes ou durante a publicacao
+
+## Checklist de release em producao
+
+- confirmar se a release altera schema; se alterar, executar `dotnet ef database update` manualmente
+- confirmar `.env` de producao com portas em loopback atras do nginx (`127.0.0.1:5200` e `127.0.0.1:5201`)
+- publicar em `main` para acionar `.github/workflows/deploy.yml`
+- validar no GitHub Actions que `dotnet build`, `python -m compileall crawler` e o deploy remoto concluíram sem erro
+- abrir `https://profinder.consertapramim.com/ProviderLeads`
+- confirmar carregamento dos filtros e da tabela
+- confirmar conexao SignalR da pagina
+- para releases da feature de mapa, abrir `Ver no mapa` e validar o carregamento dos pins
 
 ## Proximos passos sugeridos
 

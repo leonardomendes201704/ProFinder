@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -12,7 +12,7 @@ import pyodbc
 
 from crawler.config import CrawlerSettings
 from crawler.models.provider import Provider
-from crawler.utils.geolocation import ProviderGeolocator
+from crawler.utils.geolocation import ProviderGeolocator, extract_direct_coordinates
 from crawler.utils.parser import (
     build_deduplication_key,
     extract_address_locality,
@@ -35,6 +35,28 @@ SITE_SOURCE_NAMES = {
 class PersistResult:
     action: str
     lead_id: int | None
+
+
+@dataclass(slots=True)
+class ProviderLeadCoordinateBackfillSample:
+    lead_id: int
+    run_id: int | None
+    name: str
+    previous_latitude: float | None
+    previous_longitude: float | None
+    new_latitude: float
+    new_longitude: float
+
+
+@dataclass(slots=True)
+class ProviderLeadCoordinateBackfillResult:
+    inspected: int = 0
+    extractable: int = 0
+    changed: int = 0
+    updated: int = 0
+    unchanged: int = 0
+    missing_direct_coordinates: int = 0
+    samples: list[ProviderLeadCoordinateBackfillSample] = field(default_factory=list)
 
 
 class MssqlStorage:
@@ -499,6 +521,114 @@ class MssqlStorage:
         frame.to_json(json_path, orient="records", force_ascii=False, indent=2)
         return csv_path, json_path
 
+    def backfill_provider_lead_coordinates(
+        self,
+        *,
+        site_key: str = "google_maps",
+        run_id: int | None = None,
+        limit: int | None = None,
+        apply: bool = False,
+        sample_size: int = 10,
+    ) -> ProviderLeadCoordinateBackfillResult:
+        normalized_site_key = site_key.strip().lower()
+        result = ProviderLeadCoordinateBackfillResult()
+        effective_limit = max(limit, 0) if limit is not None else None
+        top_clause = f"TOP {effective_limit} " if effective_limit is not None else ""
+        query = f"""
+            SELECT {top_clause}
+                   Id,
+                   LeadCaptureRunId,
+                   Name,
+                   Latitude,
+                   Longitude,
+                   SourceListingUrl,
+                   SourceDetailsUrl,
+                   RawPayloadJson
+              FROM prf_provider_leads
+             WHERE SiteKey = ?
+            """
+        params: list[Any] = [normalized_site_key]
+
+        if run_id is not None:
+            query += " AND LeadCaptureRunId = ?"
+            params.append(run_id)
+
+        query += " ORDER BY Id"
+        rows = self._cursor().execute(query, *params).fetchall()
+        update_cursor = self._cursor() if apply else None
+        now = self.utcnow()
+
+        for row in rows:
+            result.inspected += 1
+            raw_payload = _load_json_object(row[7])
+            direct_coordinates = extract_direct_coordinates(
+                row[5],
+                raw_payload.get("place_url") if raw_payload else None,
+                row[6],
+                raw_payload.get("details_url") if raw_payload else None,
+            )
+
+            if direct_coordinates.latitude is None or direct_coordinates.longitude is None:
+                result.missing_direct_coordinates += 1
+                continue
+
+            result.extractable += 1
+            current_latitude = _coerce_float(row[3])
+            current_longitude = _coerce_float(row[4])
+            if _coordinates_match(
+                current_latitude,
+                current_longitude,
+                direct_coordinates.latitude,
+                direct_coordinates.longitude,
+            ):
+                result.unchanged += 1
+                continue
+
+            result.changed += 1
+            if len(result.samples) < max(sample_size, 0):
+                result.samples.append(
+                    ProviderLeadCoordinateBackfillSample(
+                        lead_id=int(row[0]),
+                        run_id=int(row[1]) if row[1] is not None else None,
+                        name=str(row[2]).strip(),
+                        previous_latitude=current_latitude,
+                        previous_longitude=current_longitude,
+                        new_latitude=direct_coordinates.latitude,
+                        new_longitude=direct_coordinates.longitude,
+                    )
+                )
+
+            if not apply or update_cursor is None:
+                continue
+
+            updated_payload_json = _merge_coordinates_into_payload(
+                raw_payload,
+                row[7],
+                direct_coordinates.latitude,
+                direct_coordinates.longitude,
+            )
+            update_cursor.execute(
+                """
+                UPDATE prf_provider_leads
+                   SET Latitude = ?,
+                       Longitude = ?,
+                       RawPayloadJson = ?,
+                       UpdatedAt = ?
+                 WHERE Id = ?
+                """,
+                direct_coordinates.latitude,
+                direct_coordinates.longitude,
+                truncate(updated_payload_json, 8000) if updated_payload_json is not None else None,
+                now,
+                int(row[0]),
+            )
+            result.updated += 1
+
+        if apply and result.updated > 0:
+            self._connection.commit()
+
+        return result
+
     def _load_source_ids(self) -> dict[str, int]:
         rows = self._cursor().execute("SELECT Id, Name FROM prf_lead_sources WHERE IsActive = 1").fetchall()
         return {str(row[1]).strip().lower(): int(row[0]) for row in rows}
@@ -599,3 +729,54 @@ def _pick_best_coordinate(existing: Any, incoming: float | None) -> float | None
         return float(existing)
     except (TypeError, ValueError):
         return None
+
+
+def _load_json_object(raw_value: Any) -> dict[str, Any] | None:
+    if raw_value is None:
+        return None
+
+    try:
+        parsed = json.loads(str(raw_value))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _merge_coordinates_into_payload(
+    raw_payload: dict[str, Any] | None,
+    original_payload_json: Any,
+    latitude: float,
+    longitude: float,
+) -> str | None:
+    if raw_payload is None:
+        original_payload_text = str(original_payload_json).strip() if original_payload_json else None
+        if original_payload_text:
+            return original_payload_text
+        raw_payload = {}
+
+    raw_payload["latitude"] = latitude
+    raw_payload["longitude"] = longitude
+    return json.dumps(raw_payload, ensure_ascii=False)
+
+
+def _coerce_float(value: Any) -> float | None:
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _coordinates_match(
+    current_latitude: float | None,
+    current_longitude: float | None,
+    new_latitude: float | None,
+    new_longitude: float | None,
+) -> bool:
+    if None in {current_latitude, current_longitude, new_latitude, new_longitude}:
+        return False
+
+    return round(float(current_latitude), 6) == round(float(new_latitude), 6) and round(
+        float(current_longitude),
+        6,
+    ) == round(float(new_longitude), 6)

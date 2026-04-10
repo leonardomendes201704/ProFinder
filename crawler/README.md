@@ -7,6 +7,7 @@ Crawler Python 3.11+ para captacao de prestadores em multiplas fontes com persis
 ```text
 crawler/
   main.py
+  backfill_provider_lead_geolocation.py
   config.py
   scheduler.py
   storage.py
@@ -56,6 +57,26 @@ Parametros uteis:
 - `--headless true`
 - `--max-records 200`
 - `--export-dir crawler/exports`
+
+## Backfill de geolocalizacao
+
+Para recalcular coordenadas de leads ja salvos usando os URLs persistidos:
+
+```powershell
+python crawler/backfill_provider_lead_geolocation.py --run-id 17
+```
+
+Para aplicar as alteracoes no banco:
+
+```powershell
+python crawler/backfill_provider_lead_geolocation.py --run-id 17 --apply
+```
+
+Observacoes:
+
+- o backfill e focado em `google_maps` por padrao
+- a extracao agora prioriza `!3d..!4d..` e usa `@lat,lng` apenas como fallback
+- nao depende de nova captura nem de geocodificacao externa
 
 ## Persistencia
 

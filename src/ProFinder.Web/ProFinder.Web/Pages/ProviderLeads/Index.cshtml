@@ -5,6 +5,10 @@
     ViewData["Title"] = "Crawler Leads";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
+
 <div class="page-header">
     <div>
         <h1>Leads capturados</h1>
@@ -80,11 +84,37 @@
 
 <div id="provider-leads-results"
      data-results-url="@Url.Page("/ProviderLeads/Index", pageHandler: "Results")"
+     data-map-url="@Url.Page("/ProviderLeads/Index", pageHandler: "Map")"
+     data-details-url-template="@Url.Page("/ProviderLeads/Details", new { id = "__ID__" })"
      data-hub-url="@CrawlerRunSignalRNotifier.HubRoute">
     @await Html.PartialAsync("_Results", Model)
 </div>
 
+<div class="modal fade provider-leads-map-modal" id="provider-leads-map-modal" tabindex="-1" aria-labelledby="provider-leads-map-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title h4 mb-1" id="provider-leads-map-modal-title">Leads filtrados no mapa</h2>
+                    <div id="provider-leads-map-summary" class="small text-muted">Carregando leads filtrados...</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="provider-leads-map-stage" class="provider-leads-map-stage">
+                    <div id="provider-leads-map-loading" class="provider-leads-map-state">Carregando leads filtrados no mapa...</div>
+                    <div id="provider-leads-map-empty" class="provider-leads-map-state provider-leads-map-state-empty d-none"></div>
+                    <div id="provider-leads-map-error" class="provider-leads-map-state provider-leads-map-state-error d-none"></div>
+                    <div id="provider-leads-map-canvas" class="provider-leads-map-canvas d-none" aria-label="Mapa com pins dos leads filtrados"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/provider-leads-map.js" asp-append-version="true"></script>
     <script src="~/js/provider-leads-live.js" asp-append-version="true"></script>
 }

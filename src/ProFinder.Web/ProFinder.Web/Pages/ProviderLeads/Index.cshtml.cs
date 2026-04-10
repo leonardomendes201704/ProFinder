@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,6 +12,44 @@ namespace ProFinder.Web.Pages.ProviderLeads;
 
 public class IndexModel : PageModel
 {
+    private const string ExcelContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    private static readonly (string Header, Func<ProviderLeadExportItemDto, object?> ValueFactory)[] ExportColumns =
+    [
+        ("Lead ID", item => item.Id),
+        ("Lote", item => item.LeadCaptureRunId),
+        ("Origem", item => item.SourceName),
+        ("Lead Source ID", item => item.LeadSourceId),
+        ("Site Key", item => item.SiteKey),
+        ("Nome", item => item.Name),
+        ("Telefone", item => item.Phone),
+        ("WhatsApp", item => item.WhatsApp),
+        ("Telefone Normalizado", item => item.NormalizedPhone),
+        ("Website", item => item.Website),
+        ("Busca", item => item.SearchQuery),
+        ("Endereco", item => item.Address),
+        ("Bairro", item => item.Neighborhood),
+        ("Cidade", item => item.City),
+        ("Estado", item => item.State),
+        ("Localidade", item => item.LocalityDisplay),
+        ("Regiao Alvo", item => item.RegionDisplayName),
+        ("Profissao Principal", item => item.ProfessionName),
+        ("Profissoes", item => item.ProfessionNamesDisplay),
+        ("Status", item => item.ImportStatus),
+        ("Profissional Importado ID", item => item.ImportedProfessionalId),
+        ("Profissional Importado", item => item.ImportedProfessionalName),
+        ("Latitude", item => item.Latitude),
+        ("Longitude", item => item.Longitude),
+        ("Qtd Fontes", item => item.SourceCount),
+        ("URL Listing", item => item.SourceListingUrl),
+        ("URL Detalhe", item => item.SourceDetailsUrl),
+        ("External ID", item => item.ExternalId),
+        ("Rating", item => item.Rating),
+        ("Reviews", item => item.ReviewCount),
+        ("Captado Em", item => item.ScrapedAt.ToLocalTime()),
+        ("Criado Em", item => item.CreatedAt.ToLocalTime()),
+        ("Atualizado Em", item => item.UpdatedAt.ToLocalTime())
+    ];
+
     private readonly IProviderLeadService _providerLeadService;
     private readonly ILookupService _lookupService;
 
@@ -92,6 +131,23 @@ public class IndexModel : PageModel
         };
     }
 
+    public async Task<JsonResult> OnGetMapAsync(CancellationToken cancellationToken)
+    {
+        var result = await _providerLeadService.GetMapItemsAsync(BuildFilter(), cancellationToken);
+        return new JsonResult(result);
+    }
+
+    public async Task<FileContentResult> OnGetExportAsync(CancellationToken cancellationToken)
+    {
+        var items = await _providerLeadService.GetExportItemsAsync(BuildFilter(), cancellationToken);
+        using var workbook = BuildExportWorkbook(items);
+        using var stream = new MemoryStream();
+
+        workbook.SaveAs(stream);
+
+        return File(stream.ToArray(), ExcelContentType, BuildExportFileName());
+    }
+
     private async Task LoadFilterOptionsAsync(CancellationToken cancellationToken)
     {
         var sources = await _lookupService.GetSourcesAsync(cancellationToken: cancellationToken);
@@ -113,7 +169,12 @@ public class IndexModel : PageModel
 
     private async Task LoadResultsAsync(CancellationToken cancellationToken)
     {
-        Result = await _providerLeadService.GetPagedAsync(new ProviderLeadQueryFilter
+        Result = await _providerLeadService.GetPagedAsync(BuildFilter(), cancellationToken);
+    }
+
+    private ProviderLeadQueryFilter BuildFilter()
+    {
+        return new ProviderLeadQueryFilter
         {
             SearchTerm = SearchTerm,
             LeadSourceId = LeadSourceId,
@@ -125,6 +186,74 @@ public class IndexModel : PageModel
             ImportStatus = ImportStatus,
             PageNumber = PageNumber,
             PageSize = PageSize
-        }, cancellationToken);
+        };
+    }
+
+    private XLWorkbook BuildExportWorkbook(IReadOnlyList<ProviderLeadExportItemDto> items)
+    {
+        var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Leads");
+
+        for (var columnIndex = 0; columnIndex < ExportColumns.Length; columnIndex++)
+        {
+            var cell = worksheet.Cell(1, columnIndex + 1);
+            cell.Value = ExportColumns[columnIndex].Header;
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F8F9FA");
+        }
+
+        for (var rowIndex = 0; rowIndex < items.Count; rowIndex++)
+        {
+            var item = items[rowIndex];
+
+            for (var columnIndex = 0; columnIndex < ExportColumns.Length; columnIndex++)
+            {
+                SetCellValue(worksheet.Cell(rowIndex + 2, columnIndex + 1), ExportColumns[columnIndex].ValueFactory(item));
+            }
+        }
+
+        var lastRow = Math.Max(items.Count + 1, 1);
+        var lastColumn = ExportColumns.Length;
+        var usedRange = worksheet.Range(1, 1, lastRow, lastColumn);
+        usedRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+        worksheet.SheetView.FreezeRows(1);
+        usedRange.SetAutoFilter();
+        worksheet.Columns(1, lastColumn).AdjustToContents();
+
+        return workbook;
+    }
+
+    private string BuildExportFileName()
+    {
+        var timestamp = DateTime.UtcNow.ToLocalTime().ToString("yyyyMMdd-HHmm");
+        return LeadCaptureRunId.HasValue
+            ? $"provider-leads-lote-{LeadCaptureRunId.Value}-{timestamp}.xlsx"
+            : $"provider-leads-{timestamp}.xlsx";
+    }
+
+    private static void SetCellValue(IXLCell cell, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                cell.Value = string.Empty;
+                break;
+            case string text:
+                cell.Value = text;
+                break;
+            case int number:
+                cell.Value = number;
+                break;
+            case decimal decimalValue:
+                cell.Value = decimalValue;
+                break;
+            case DateTime dateTime:
+                cell.Value = dateTime;
+                cell.Style.DateFormat.Format = "dd/MM/yyyy HH:mm";
+                break;
+            default:
+                cell.Value = value.ToString();
+                break;
+        }
     }
 }

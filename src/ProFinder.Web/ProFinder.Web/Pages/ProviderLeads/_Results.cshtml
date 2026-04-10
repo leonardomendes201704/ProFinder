@@ -3,7 +3,35 @@
 <div class="card">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h2 class="h5 mb-0">Resultados</h2>
-        <span class="text-muted small">@Model.Result.TotalCount lead(s)</span>
+        <div class="d-flex align-items-center gap-2">
+            @if (Model.Result.TotalCount > 0)
+            {
+                <a class="btn btn-sm btn-outline-success"
+                   asp-page="/ProviderLeads/Index"
+                   asp-page-handler="Export"
+                   asp-route-SearchTerm="@Model.SearchTerm"
+                   asp-route-LeadSourceId="@Model.LeadSourceId"
+                   asp-route-ProfessionId="@Model.ProfessionId"
+                   asp-route-RegionId="@Model.RegionId"
+                   asp-route-LeadCaptureRunId="@Model.LeadCaptureRunId"
+                   asp-route-SiteKey="@Model.SiteKey"
+                   asp-route-City="@Model.City"
+                   asp-route-ImportStatus="@Model.ImportStatus">
+                    Exportar Excel
+                </a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-sm btn-outline-success" disabled>Exportar Excel</button>
+            }
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-provider-leads-map-trigger
+                    disabled="@(Model.Result.TotalCount == 0 ? "disabled" : null)">
+                Ver no mapa
+            </button>
+            <span class="text-muted small">@Model.Result.TotalCount lead(s)</span>
+        </div>
     </div>
     <div class="card-body p-0">
         @if (Model.Result.Items.Count == 0)
